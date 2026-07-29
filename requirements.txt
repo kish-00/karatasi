@@ -2,7 +2,7 @@
 # Africa Deep Tech Challenge 2026
 
 # Image Processing
-opencv-python>=4.9.0
+opencv-python-headless>=4.9.0
 Pillow>=10.3.0
 numpy>=1.26.0
 

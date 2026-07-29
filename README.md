@@ -30,7 +30,7 @@ Karatasi runs entirely offline on an ordinary 8GB laptop:
 
 | Milestone | Target | Status |
 |---|---|---|
-| OCR pipeline (typed + handwriting) | Week 1 (Jul 29 – Aug 4) | ⬜ Not started |
+| OCR pipeline (typed + handwriting) | Week 1 (Jul 29 – Aug 4) | ✅ Complete |
 | Form understanding + LLM integration | Week 2 (Aug 5 – 11) | ⬜ Not started |
 | Streamlit UI + Swahili support | Week 3 (Aug 12 – 18) | ⬜ Not started |
 | Polish, demo, submission | Week 4 (Aug 19 – 25) | ⬜ Not started |

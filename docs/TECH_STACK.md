@@ -23,7 +23,7 @@ Key OpenCV functions used:
 
 ## OCR — Printed Text
 
-**Chosen**: Tesseract 5 (pytesseract)
+**Chosen**: Tesseract 5 (pytesseract, via `opencv-python-headless`)
 **Alternative**: EasyOCR, PaddleOCR, Surya
 
 Tesseract is the only mature, offline, open-source OCR engine with Swahili language support (`-l swk`). EasyOCR and PaddleOCR are more accurate for handwriting but are 2-3x heavier (GPU-dependent) and lack Swahili. Surya is more modern but requires significant VRAM.
@@ -49,9 +49,10 @@ TrOCR is a transformer-based handwriting recognition model (~330M parameters, ~3
 
 ```
 Model: microsoft/trocr-base-handwritten
-Size: ~300MB (quantized)
+Size: ~300MB (PyTorch checkpoint)
 Accuracy on English handwriting: ~80% (short phrases)
-RAM usage: ~500MB (loaded on-demand)
+RAM usage: ~300MB (loaded on-demand, cached across calls)
+Inference speed: ~17s first load, ~1-5s subsequent (on CPU)
 ```
 
 **Why not a vision-language model (VLM)?**
@@ -149,7 +150,7 @@ Workflow:
 
 1. **UI text**: Static translation map in `src/ui/strings.py` — all UI strings stored in English + Swahili, toggled by session state
 2. **LLM output**: System prompt tells Qwen2.5 to output field labels in the user's selected language. Qwen2.5's training data includes Swahili, so it handles translation naturally for structured field labels
-3. **OCR**: Tesseract configured with `-l swk+eng` for Swahili + English text recognition. Swahili uses Latin script with no special characters, so standard OCR works
+3. **OCR**: Tesseract configured with `-l eng` (the standard distribution lacks Swahili .traineddata, but Swahili uses Latin script, so the English model handles it)
 
 This avoids adding a translation model (extra RAM) while still delivering a functional bilingual experience.
 
