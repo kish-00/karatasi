@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# Models (downloaded)
+models/
+*.gguf
+
+# Uploaded forms (runtime)
+uploads/
+!uploads/.gitkeep
+
+# Streamlit cache
+.streamlit/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+
+# Codegraph index
+.codegraph
+
+# OpenCode session data
+.omo/
