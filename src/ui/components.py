@@ -11,9 +11,8 @@ from typing import TYPE_CHECKING
 
 import streamlit as st
 
-from src.forms.fields import ExtractedField, extract_fields
-from src.llm.prompts import FormType
-from src.pipeline import PipelineResult
+from src.forms.fields import ExtractedField
+from src.pipeline import PipelineResult, re_extract_fields
 
 if TYPE_CHECKING:
     from src.ui.strings import Strings
@@ -147,6 +146,7 @@ def render_form_type_override(result: PipelineResult, s: Strings) -> None:
     field extraction is re-run with the selected type and the
     session state is updated.
     """
+    from src.llm.prompts import FormType
     from src.ui.strings import get_form_type_label
 
     current = result.form_type.value
@@ -177,18 +177,10 @@ def render_form_type_override(result: PipelineResult, s: Strings) -> None:
 
         new_type = FT(selected_value)
         try:
-            new_fields = extract_fields(
-                result.full_text,
-                new_type,
-                use_llm=True,
-                language=st.session_state.language,
+            new_result = re_extract_fields(
+                result, new_type, language=st.session_state.language
             )
-            st.session_state.result = dataclasses.replace(
-                result,
-                form_type=new_type,
-                form_type_confidence=1.0,
-                fields=new_fields,
-            )
+            st.session_state.result = new_result
             st.rerun()
         except Exception as exc:
             import logging

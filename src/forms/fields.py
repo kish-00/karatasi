@@ -285,6 +285,9 @@ def _merge_llm_with_template(
             ft = FieldType(field_type)
         except ValueError:
             ft = FieldType.TEXT
+        # For inferred fields (no template), ensure label_sw has a visible fallback
+        if not label_sw or label_sw == label:
+            label_sw = f"{label} [inferred]"
         llm_map[key] = ExtractedField(
             key=key,
             label_en=label,
@@ -354,11 +357,15 @@ def _label_to_snake_key(label: str, fallback_idx: int) -> str:
         return f"field_{fallback_idx}"
     # Strip trailing parenthetical suffixes like (DD/MM/YYYY)
     clean = re.sub(r"\s*\([^)]*\)\s*$", "", clean)
+    # Strip apostrophes so "Father's Name" -> "Fathers Name" -> "fathers_name"
+    clean = clean.replace("'", "").replace("\u2019", "")
     # Convert spaces/punctuation to underscores, lowercase
     snake = _SNAKE_RE.sub("_", clean).strip("_").lower()
     # Collapse consecutive underscores
     snake = re.sub(r"_+", "_", snake)
-    # Handle empty after sanitization
+    # Guard against keys starting with a digit (not valid Python identifiers)
+    if snake and snake[0].isdigit():
+        snake = f"field_{snake}"
     return snake or f"field_{fallback_idx}"
 
 

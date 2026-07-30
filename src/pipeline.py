@@ -6,6 +6,7 @@ Wires OCR (preprocess + layout + Tesseract + TrOCR) with LLM
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 import time
 from dataclasses import dataclass, field
@@ -46,6 +47,8 @@ class PipelineResult:
     full_text: str = ""
     is_web_portal: bool = False
     elapsed_ms: float = 0.0
+    manual_override: bool = False
+    """True if the form type was manually overridden by the user (vs auto-detected)."""
 
     @property
     def mean_confidence(self) -> float:
@@ -124,6 +127,50 @@ def process_form(
         layout=layout,
         full_text=full_text,
         elapsed_ms=elapsed,
+    )
+
+
+def re_extract_fields(
+    result: PipelineResult,
+    new_form_type: FormType,
+    *,
+    language: Language = "English",
+) -> PipelineResult:
+    """Re-extract fields with a different form type, preserving layout.
+
+    This is the single entry point for form-type overrides. It
+    extracts fields for the new type, attaches region IDs from the
+    original layout (so PDF overlay still works), and marks the
+    result as manually overridden.
+
+    Args:
+        result: The current pipeline result (layout is preserved).
+        new_form_type: The form type to re-extract with.
+        language: Output language for labels.
+
+    Returns:
+        A new PipelineResult with re-extracted fields and manual_override=True.
+    """
+    new_fields = extract_fields(
+        result.full_text, new_form_type, use_llm=True, language=language
+    )
+
+    # Attach region_ids from the original layout so PDF export works
+    field_regions = [
+        r
+        for r in (result.layout.regions if result.layout else [])
+        if r.region_type == "field"
+    ]
+    for i, field in enumerate(new_fields):
+        if i < len(field_regions):
+            field.region_id = i
+
+    return dataclasses.replace(
+        result,
+        form_type=new_form_type,
+        form_type_confidence=1.0,
+        fields=new_fields,
+        manual_override=True,
     )
 
 
