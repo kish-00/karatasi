@@ -15,31 +15,15 @@ from src.forms.fields import ExtractedField
 from src.pipeline import PipelineResult
 
 
-def export_to_json(result: PipelineResult) -> dict[str, Any]:
+def export_to_json(result: PipelineResult, language: str = "English") -> dict[str, Any]:
     """Convert a PipelineResult to a JSON-serializable dict.
 
     Args:
         result: The pipeline output to export.
+        language: Output language ("English" or "Swahili").
 
     Returns:
-        Dict matching the project's output schema:
-        {
-            "form_type": str,
-            "form_type_confidence": float,
-            "language": str,
-            "processed_at": str (ISO 8601),
-            "elapsed_ms": float,
-            "is_web_portal": bool,
-            "fields": [
-                {
-                    "label": str,
-                    "value": str,
-                    "source": "printed" | "handwritten" | "empty",
-                    "confidence": float,
-                    "flag": str | null
-                }
-            ]
-        }
+        Dict matching the project's output schema.
     """
     fields_json: list[dict[str, Any]] = []
     for f in result.fields:
@@ -61,7 +45,7 @@ def export_to_json(result: PipelineResult) -> dict[str, Any]:
     return {
         "form_type": result.form_type.value if result.form_type else "UNKNOWN",
         "form_type_confidence": round(result.form_type_confidence, 3),
-        "language": "English",
+        "language": language,
         "processed_at": datetime.now().isoformat(),
         "elapsed_ms": round(result.elapsed_ms, 1),
         "is_web_portal": result.is_web_portal,
@@ -89,23 +73,32 @@ def _determine_flag(field: ExtractedField) -> str | None:
     return None
 
 
-def write_json(result: PipelineResult, output_path: str | Path) -> Path:
+def write_json(result: PipelineResult, output_path: str | Path, language: str = "English") -> Path:
     """Write pipeline result to a JSON file.
 
     Args:
         result: Pipeline output.
         output_path: Destination path for the JSON file.
+        language: Output language ("English" or "Swahili").
 
     Returns:
         The output path.
     """
-    data = export_to_json(result)
+    data = export_to_json(result, language=language)
     output_path = Path(output_path)
     output_path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
     return output_path
 
 
-def json_bytes(result: PipelineResult) -> bytes:
-    """Return pipeline result as JSON bytes (for Streamlit download)."""
-    data = export_to_json(result)
+def json_bytes(result: PipelineResult, language: str = "English") -> bytes:
+    """Return pipeline result as JSON bytes (for Streamlit download).
+
+    Args:
+        result: Pipeline output.
+        language: Output language ("English" or "Swahili").
+
+    Returns:
+        JSON bytes.
+    """
+    data = export_to_json(result, language=language)
     return json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")

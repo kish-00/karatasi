@@ -136,15 +136,15 @@ def _apply_overlays(
     # Get field regions (field-type regions from layout detection)
     field_regions = [r for r in result.layout.regions if r.region_type == "field"]
 
-    for i, field in enumerate(result.fields):
+    for field in result.fields:
         if not field.value.strip() or field.confidence < 0.01:
             continue  # Skip empty or zero-confidence fields
 
-        if i >= len(field_regions):
-            logger.debug("No layout region for field %s (index %d)", field.key, i)
+        if field.region_id is None or field.region_id >= len(field_regions):
+            logger.debug("No layout region for field %s (region_id=%s)", field.key, field.region_id)
             continue
 
-        region = field_regions[i]
+        region = field_regions[field.region_id]
 
         # Scale region to PDF coordinates
         x0 = region.x * scale_x

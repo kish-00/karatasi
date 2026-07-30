@@ -48,7 +48,10 @@ for key, default in _DEFAULT_STATE.items():
 
 
 def _clear_state() -> None:
-    """Clear session state to allow a new upload."""
+    """Clear session state and clean up temp files."""
+    original = st.session_state.original_path
+    if original:
+        Path(original).unlink(missing_ok=True)
     st.session_state.result = None
     st.session_state.original_path = None
     st.session_state.processed = False
@@ -151,7 +154,16 @@ if result and not result.is_web_portal:
 
     # ── Export section ─────────────────────────────────────────────
     st.markdown(f"### {s.export_header}")
-    render_export_buttons(result, original_path, s)
+    export_result = PipelineResult(
+        form_type=result.form_type,
+        form_type_confidence=result.form_type_confidence,
+        fields=updated_fields,
+        layout=result.layout,
+        full_text=result.full_text,
+        is_web_portal=result.is_web_portal,
+        elapsed_ms=result.elapsed_ms,
+    )
+    render_export_buttons(export_result, original_path, s)
 
     # ── Raw OCR text (expandable) ──────────────────────────────────
     with st.expander(s.raw_ocr_label):

@@ -31,9 +31,9 @@ Karatasi runs entirely offline on an ordinary 8GB laptop:
 | Milestone | Target | Status |
 |---|---|---|
 | OCR pipeline (typed + handwriting) | Week 1 (Jul 29 – Aug 4) | ✅ Complete |
-| Form understanding + LLM integration | Week 2 (Aug 5 – 11) | ⬜ Not started |
-| Streamlit UI + Swahili support | Week 3 (Aug 12 – 18) | ⬜ Not started |
-| Polish, demo, submission | Week 4 (Aug 19 – 25) | ⬜ Not started |
+| Form understanding + LLM integration | Week 2 (Aug 5 – 11) | ✅ Complete |
+| Streamlit UI + Swahili support + Export | Week 3 (Aug 12 – 18) | ✅ Complete |
+| Polish, demo, submission | Week 4 (Aug 19 – 25) | ⬜ In progress |
 
 ## Tech Stack
 
@@ -43,9 +43,8 @@ Karatasi runs entirely offline on an ordinary 8GB laptop:
 | Typed OCR | Tesseract (pytesseract) | Printed label and text recognition |
 | Handwriting OCR | TrOCR (Microsoft) | Handwritten field content recognition |
 | LLM | Qwen2.5-1.5B-Q4_K_M (llama.cpp) | Form type identification, field extraction, structuring |
-| Vector Store | FAISS | Similarity search (form templates) |
 | UI | Streamlit | Self-contained web interface |
-| PDF Export | ReportLab | Generate filled form PDFs |
+| PDF Export | PyMuPDF | Overlay text onto original scanned form |
 
 **Memory footprint**: ~4-5GB (comfortably fits in 8GB budget)
 
@@ -86,20 +85,22 @@ karatasi/
 ├── src/
 │   ├── app.py               # Streamlit entry point
 │   ├── ocr/
-│   │   ├── preprocess.py    # OpenCV image preprocessing
+│   │   ├── preprocess.py    # OpenCV image preprocessing + layout detection
 │   │   ├── typed.py         # Tesseract OCR for printed text
 │   │   └── handwriting.py   # TrOCR for handwritten text
 │   ├── forms/
 │   │   ├── detector.py      # Form type identification
-│   │   ├── templates/       # Form template definitions
-│   │   └── fields.py        # Field extraction schemas
+│   │   ├── fields.py        # Field extraction schemas + validation
+│   │   └── templates/       # Form template definitions
 │   ├── llm/
 │   │   ├── serve.py         # llama.cpp model serving
 │   │   └── prompts.py       # Prompt templates
 │   ├── ui/
-│   │   └── components.py    # Streamlit UI components
+│   │   ├── components.py    # Streamlit UI components (editable fields, export)
+│   │   └── strings.py       # English + Swahili UI strings
 │   └── export/
-│       └── pdf.py           # PDF generation (ReportLab)
+│       ├── pdf.py           # PDF overlay via PyMuPDF
+│       └── json_export.py   # Structured JSON export
 ├── models/                  # Downloaded model files (gitignored)
 ├── samples/                 # Sample forms for testing
 ├── requirements.txt

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import streamlit as st
 
-from src.forms.fields import ExtractedField, validate_field
+from src.forms.fields import ExtractedField
 from src.pipeline import PipelineResult
 
 if TYPE_CHECKING:
@@ -187,7 +187,8 @@ def render_export_buttons(result: PipelineResult, original_path: str | None, s: 
         try:
             from src.export.json_export import json_bytes
 
-            json_data = json_bytes(result)
+            language = st.session_state.get("language", "English")
+            json_data = json_bytes(result, language=language)
             st.download_button(
                 label=f"📋 {s.download_json_label}",
                 data=json_data,
@@ -224,17 +225,4 @@ def _confidence_badge(confidence: float) -> None:
     )
 
 
-def render_validation_errors(field: ExtractedField, s: Strings) -> list[str]:
-    """Validate a field and return a list of error messages.
 
-    Uses the field's field_type to determine validation rules.
-
-    Args:
-        field: The extracted field to validate.
-        s: UI strings for the current language.
-
-    Returns:
-        List of validation error messages (empty if valid).
-    """
-    rules = ["required"] if field.field_type.value == "text" else []
-    return validate_field(field.value, rules)  # type: ignore[arg-type]

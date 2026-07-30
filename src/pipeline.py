@@ -108,9 +108,13 @@ def process_form(
 
     # ── 7. Handwriting OCR on field regions (when explicitly enabled) ──
     hw_confidence = 0.0
+    field_regions = [r for r in layout.regions if r.region_type == "field"]
     if use_trocr:
-        field_regions = [r for r in layout.regions if r.region_type == "field"]
         hw_confidence = _run_handwriting_ocr(fields, field_regions, proc.image, full_text)
+
+    for i, field in enumerate(fields):
+        if i < len(field_regions):
+            object.__setattr__(field, "region_id", i)
 
     elapsed = (time.perf_counter() - start) * 1000
     return PipelineResult(

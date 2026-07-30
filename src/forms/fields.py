@@ -64,6 +64,8 @@ class ExtractedField:
     field_type: FieldType = FieldType.TEXT
     is_handwritten: bool = False
     validated: bool = False
+    region_id: int | None = None
+    """Index into layout field_regions for PDF overlay positioning."""
 
 
 # ── Validation ──────────────────────────────────────────────────────
