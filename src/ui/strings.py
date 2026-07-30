@@ -33,6 +33,10 @@ def _build(lang: Language) -> SimpleNamespace:
             "Built for the Africa Deep Tech Challenge 2026 — running fully offline on an 8 GB laptop.",
             "Imejengwa kwa Africa Deep Tech Challenge 2026 — inafanya kazi bila mtandao kwenye laptop ya 8 GB.",
         ),
+        # ── Options (toggles) ──
+        options_header=s("Options", "Chaguo"),
+        use_trocr_label=s("Handwriting OCR (TrOCR, ~70s, +1.5GB)", "OCR ya Mwandiko (TrOCR, ~70s, +1.5GB)"),
+        use_llm_label=s("LLM Field Extraction (~3s, +2.5GB)", "Uchimbaji wa LLM (~3s, +2.5GB)"),
         # ── Upload ──
         upload_header=s("Upload a Form", "Pakia Fomu"),
         upload_label=s(
@@ -83,6 +87,10 @@ def _build(lang: Language) -> SimpleNamespace:
         # ── Language ──
         language_label=s("Language", "Lugha"),
         # ── OCR ──
+        # ── Warnings ──
+        blur_warning_header=s("Blur Detection", "Ugunduzi wa Ukungu"),
+        rotate_warning_header=s("Rotation", "Mzunguko"),
+        non_form_warning_header=s("Not a Form?", "Si Fomu?"),
         raw_ocr_label=s("Raw OCR Text", "Maandishi ya OCR"),
         no_ocr_text=s("No OCR text available.", "Hakuna maandishi ya OCR."),
         # ── Errors ──
@@ -91,6 +99,10 @@ def _build(lang: Language) -> SimpleNamespace:
         error_processing=s(
             "An error occurred while processing the form.",
             "Hitilafu imetokea wakati wa kuchakata fomu.",
+        ),
+        error_file_too_large=s(
+            "File is too large (>20MB). Please downscale to under 20MB.",
+            "Faili ni kubwa sana (>20MB). Tafadhali punguza ukubwa hadi chini ya 20MB.",
         ),
         error_unsupported_format=s(
             "Unsupported file format. Please upload a PDF, JPG, or PNG.",

@@ -21,6 +21,7 @@ from src.ui.components import (
     render_export_buttons,
     render_form_type_override,
     render_sidebar_info,
+    render_toggles,
 )
 from src.ui.strings import get_strings
 
@@ -74,10 +75,13 @@ st.markdown(
 with st.sidebar:
     st.markdown("### Karatasi")
     selected_lang = language_selector()
+    s = get_strings(selected_lang)
+
+    # Render opt-in toggles (TrOCR + LLM)
+    use_trocr, use_llm = render_toggles(s)
 
     # Capture the result at render time for sidebar info
     sidebar_result: PipelineResult | None = st.session_state.result
-    s = get_strings(selected_lang)
     render_sidebar_info(sidebar_result, s)
 
     st.markdown("---")
@@ -110,6 +114,15 @@ uploaded_file = st.file_uploader(
     key="file_uploader",
 )
 
+# ── File size guard ────────────────────────────────────────────────
+
+_MAX_FILE_BYTES = 20 * 1024 * 1024  # 20 MB
+
+if uploaded_file is not None and not st.session_state.processed:
+    if uploaded_file.size and uploaded_file.size > _MAX_FILE_BYTES:
+        st.error(s.error_file_too_large)
+        st.stop()
+
 # ── Process button ──────────────────────────────────────────────────
 
 if uploaded_file is not None and not st.session_state.processed:
@@ -127,8 +140,8 @@ if uploaded_file is not None and not st.session_state.processed:
                 result = process_form(
                     tmp_path,
                     language=st.session_state.language,
-                    use_llm=True,
-                    use_trocr=True,
+                    use_llm=use_llm,
+                    use_trocr=use_trocr,
                 )
 
                 st.session_state.result = result
@@ -149,6 +162,14 @@ if result and not result.is_web_portal:
 
     # Summary row
     display_form_summary(result, s)
+
+    # Quality warnings
+    if result.blur_warning:
+        st.warning(f"⚠️ {s.blur_warning_header}: {result.blur_warning}")
+    if result.rotate_warning:
+        st.info(f"🔄 {s.rotate_warning_header}: {result.rotate_warning}")
+    if result.non_form_warning:
+        st.warning(f"❓ {s.non_form_warning_header}: {result.non_form_warning}")
 
     # Form type override
     render_form_type_override(result, s)

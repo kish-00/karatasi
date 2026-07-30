@@ -48,6 +48,28 @@ def language_selector() -> str:
     return st.session_state.language
 
 
+def render_toggles(s: Strings) -> tuple[bool, bool]:
+    """Render the TrOCR and LLM toggle checkboxes in the sidebar.
+
+    Returns:
+        (use_trocr, use_llm) based on checkbox state.
+    """
+    st.markdown(f"**{s.options_header if hasattr(s, 'options_header') else 'Options'}**")
+    use_trocr = st.checkbox(
+        s.use_trocr_label,
+        value=st.session_state.get("_use_trocr", False),
+        key="_use_trocr",
+        help="Enable TrOCR handwriting recognition on field regions. Adds ~70s and ~1.5GB RAM.",
+    )
+    use_llm = st.checkbox(
+        s.use_llm_label,
+        value=st.session_state.get("_use_llm", False),
+        key="_use_llm",
+        help="Use the local LLM for field value extraction. Adds ~3s and ~2.5GB RAM.",
+    )
+    return use_trocr, use_llm
+
+
 def render_sidebar_info(result: PipelineResult | None, s: Strings) -> None:
     """Render sidebar metadata about the processed form."""
     if result is None:
