@@ -157,11 +157,15 @@ def detect_form_type(
                 parsed = _parse_json(result.text)
                 if parsed and "form_type" in parsed:
                     ft = parsed["form_type"].upper().replace(" ", "_")
-                    if ft in FormType._value2map_:
+                    try:
+                        form_type = FormType(ft)
+                    except ValueError:
+                        pass
+                    else:
                         conf = float(parsed.get("confidence", 0.5))
                         reasoning = parsed.get("reasoning", "")
                         return FormDetectionResult(
-                            form_type=FormType(ft),
+                            form_type=form_type,
                             confidence=conf,
                             method="llm",
                             reasoning=reasoning,

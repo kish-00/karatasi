@@ -61,6 +61,8 @@ class LayoutResult:
     regions: list[BoundingBox] = field(default_factory=list)
     label_field_pairs: list[tuple[BoundingBox, BoundingBox]] = field(default_factory=list)
     elapsed_ms: float = 0.0
+    original_shape: tuple[int, int] = (0, 0)
+    """(height, width) of the preprocessed image (region coordinate space)."""
 
 
 # ── Constants ───────────────────────────────────────────────────────
@@ -477,4 +479,9 @@ def detect_layout(
             pairs.append((label, best_field))
 
     elapsed = (time.perf_counter() - start) * 1000
-    return LayoutResult(regions=regions, label_field_pairs=pairs, elapsed_ms=elapsed)
+    return LayoutResult(
+        regions=regions,
+        label_field_pairs=pairs,
+        elapsed_ms=elapsed,
+        original_shape=(curr_h, curr_w),
+    )

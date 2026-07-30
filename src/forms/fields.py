@@ -277,13 +277,17 @@ def _merge_llm_with_template(
         if not key and template:
             key = f"field_{len(llm_map)}"
 
+        try:
+            ft = FieldType(field_type)
+        except ValueError:
+            ft = FieldType.TEXT
         llm_map[key] = ExtractedField(
             key=key,
             label_en=label,
             label_sw=label_sw,
             value=value,
             confidence=conf,
-            field_type=FieldType(field_type) if field_type in FieldType._value2map_ else FieldType.TEXT,
+            field_type=ft,
         )
 
     # Merge: template order, LLM values where available
