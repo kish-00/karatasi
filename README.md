@@ -19,9 +19,10 @@ filled copy — all on a laptop with no internet connection.
 Every Kenyan has filled out a government form with a pen at a crowded office desk only to be told "come back tomorrow" because of an error. Forms get rejected for bad handwriting, missing fields, or illegible copies. Internet-based solutions don't help — most Kenyans access government services from cybercafés or local offices with unreliable connectivity.
 
 Karatasi runs entirely offline on an ordinary 8GB laptop:
-- **Upload** — Scan or photo of any government form (ID application, KRA PIN, land board, birth certificate)
+- **Upload** — Scan or photo of any government form (ID application, KRA PIN, land board, birth certificate); supports multipage PDFs
 - **Understand** — AI detects the form type, reads printed labels with Tesseract OCR, reads handwritten content with TrOCR
 - **Auto-fill** — Extracted fields appear in an editable interface in English or Swahili
+- **Quality checks** — Auto-rotate, blur detection, non-form warnings keep results reliable
 - **Export** — Download a filled PDF or structured JSON
 
 ## Project Status
@@ -29,11 +30,11 @@ Karatasi runs entirely offline on an ordinary 8GB laptop:
 **Active development** — built for the Africa Deep Tech Challenge 2026 (deadline: Aug 24–25, 2026).
 
 | Milestone | Target | Status |
-|---|---|---|
+|---|---|---|---|
 | OCR pipeline (typed + handwriting) | Week 1 (Jul 29 – Aug 4) | ✅ Complete |
 | Form understanding + LLM integration | Week 2 (Aug 5 – 11) | ✅ Complete |
 | Streamlit UI + Swahili support + Export | Week 3 (Aug 12 – 18) | ✅ Complete |
-| Polish, demo, submission | Week 4 (Aug 19 – 25) | ⬜ In progress |
+| Polish, demo, submission | Week 4 (Aug 19 – 25) | ✅ In progress |
 
 ## Tech Stack
 

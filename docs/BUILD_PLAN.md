@@ -235,25 +235,25 @@ Demo-ready application that judges can run on an 8GB laptop.
 - [ ] Measure end-to-end time and accuracy
 
 **Day 19: Performance Tuning**
-- [ ] Memory optimization:
+- [x] Memory optimization:
   - Profile memory usage with `memory_profiler`
   - Implement model unloading aggressively
   - Stream image processing (avoid loading full HD images)
   - Use lazy imports
-- [ ] Speed optimization:
+- [x] Speed optimization:
   - Cache OCR results for same image
-  - Parallelize Tesseract + TrOCR
-  - LLM batching
+  - Parallelize Tesseract + TrOCR (batch inference)
+  - LLM batching (not needed — keyword detection is primary)
 
 **Day 20: Edge Cases + error handling**
-- [ ] Handle:
-  - 10MB+ scanned files (downscale)
-  - Rotated/upside-down pages (auto-rotate)
-  - Multipage forms (process page by page)
-  - Blurry/low-res photos (warning + suggestion)
-  - Non-form uploads (reject gracefully)
-- [ ] Comprehensive error messages in both languages
-- [ ] Fallback paths for every failure mode
+- [x] Handle:
+  - 10MB+ scanned files (downscale) — file size guard at 20MB
+  - Rotated/upside-down pages (auto-rotate via Tesseract OSD)
+  - Multipage forms (process page by page, combine OCR text)
+  - Blurry/low-res photos (Laplacian variance blur detection)
+  - Non-form uploads (keyword + region density heuristic)
+- [x] Comprehensive error messages in both languages
+- [x] Fallback paths for every failure mode
 
 **Day 21: Demo Preparation**
 - [ ] Record 3-minute demo video (required for submission)
@@ -291,11 +291,14 @@ Demo-ready application that judges can run on an 8GB laptop.
 ## Success Criteria
 
 | Metric | Target | Current | How to Measure |
-|---|---|---|---|
+|---|---|---|---|---|
 | Form type detection accuracy | >90% | **100%** (5/5) | Test on 20 labeled forms |
 | Field extraction accuracy | >80% | N/A (no filled forms yet) | Compare extracted vs manual entry on 10 forms |
-| Memory usage (fast path) | <6GB | **<500MB** | `free -h` while running |
-| Memory usage (all models) | <6GB | **~4-7GB** (swap risk) | `free -h` while running |
-| Pipeline speed | <30s | **11.4s avg** (fast path) | Stopwatch per form |
-| Swahili support | All UI + outputs | **Not yet built** | Manual review |
-| One-command launch | Yes | **Not yet** (CLI only) | Test on clean machine |
+| Memory usage (fast path) | <6GB | **~2.5GB** | `free -h` while running |
+| Memory usage (all models) | <6GB | **~6-7GB** (swap risk) | `free -h` while running |
+| Pipeline speed | <30s | **~12s** (fast path) | Stopwatch per form |
+| Swahili support | All UI + outputs | **All UI + keyboard toggle** | Manual review |
+| One-command launch | Yes | **`streamlit run src/app.py`** | Test on clean machine |
+| Multipage forms | Supported | **Iterate PDF pages, combine text** | Test with 2+ page PDF |
+| Blur/rotate/non-form warnings | Shown in UI | **Warnings with toggle to proceed** | Upload blurry/rotated sample |
+| File size guard | >20MB rejected | **Rejected with Swahili error** | Upload 25MB file |

@@ -23,22 +23,51 @@ Karatasi is an offline-first document processing pipeline. A scanned form enters
 │                                                                  │
 │  Steps:                                                          │
 │  1. Convert to grayscale                                         │
-│  2. Adaptive thresholding (binarization)                         │
-│  3. Deskew (correct rotation)                                    │
-│  4. Denoise (remove scan noise/specks)                           │
-│  5. Morphological ops (close gaps in broken text)                │
-│  6. DPI normalization (scale to 300 DPI)                         │
+│  2. Auto-rotate (Tesseract OSD) — detect + correct orientation   │
+│  3. Adaptive thresholding (binarization)                         │
+│  4. Deskew (correct rotation)                                    │
+│  5. Blur detection (Laplacian variance) — warn if blurry         │
+│  6. Denoise (remove scan noise/specks)                           │
+│  7. Morphological ops (close gaps in broken text)                │
+│  8. DPI normalization (scale to 300 DPI)                         │
 │                                                                  │
 │  Why this matters:                                               │
 │  Kenyan government forms are often filled by hand, then          │
 │  photocopied, then scanned. Without preprocessing, OCR           │
 │  accuracy drops below 50%. With it, we hit 85%+ on typed         │
 │  and 70%+ on handwriting.                                        │
+│                                                                  │
+│  Multipage PDFs: PDFs with >1 page are split page-by-page.       │
+│  Each page is rendered at 200 DPI via PyMuPDF, preprocessed,     │
+│  and OCR'd independently. OCR text is joined with page-break     │
+│  markers; form detection + field extraction run on the           │
+│  combined text. Layout uses the first page for field regions.    │
+│  The UI shows a page count indicator when multipage.             │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 1.5: WEB PORTAL DETECTION                                 │
+│  STAGE 1.5: QUALITY CHECKS + NON-FORM DETECTION                  │
+│                                                                  │
+│  After preprocessing, three lightweight checks run:              │
+│                                                                  │
+│  a) Blur detection — Laplacian variance threshold. Score <50    │
+│     = blurry warning; <100 = slightly blurry warning.            │
+│                                                                  │
+│  b) Auto-rotate — Tesseract OSD (orientation + script           │
+│     detection) corrects upside-down pages. Flagged in UI.       │
+│                                                                  │
+│  c) Non-form heuristics — keyword matching + region count        │
+│     decides if the page looks like a government form. If not,    │
+│     a warning is shown but processing continues.                 │
+│                                                                  │
+│  These checks never block processing — they surface warnings     │
+│  in the UI so the user can judge quality.                        │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  STAGE 1.6: WEB PORTAL DETECTION                                 │
 │                                                                  │
 │  Some PDFs are not scanned forms but web portal printouts        │
 │  (e.g., "Enable JavaScript and cookies to continue").            │
@@ -82,6 +111,10 @@ Karatasi is an offline-first document processing pipeline. A scanned form enters
 │  Swahili uses `-l eng` (Latin script, no Swahili traineddata     │
 │  available in standard distribution).                            │
 │                                                                  │
+│  OCR results are cached by image content hash (SHA-256 of        │
+│  first 4096 bytes). Re-processing the same file skips            │
+│  Tesseract entirely — ~10s saved per repeat upload.              │
+│                                                                  │
 │  Performance: full-page OCR in ~10.9s on 200 DPI scans           │
 │  (dominant pipeline bottleneck at ~97% of total time).           │
 └───────────────────────────┬─────────────────────────────────────┘
@@ -97,13 +130,17 @@ Karatasi is an offline-first document processing pipeline. A scanned form enters
 │  IAM + RIMES handwriting datasets. Handles short field values    │
 │  well (names, dates, ID numbers).                                │
 │                                                                  │
+│  Uses batch inference (`recognize_batch()`) — loads the model    │
+│  once and processes all field regions in a single forward pass,  │
+│  avoiding repeated model load overhead on CPU.                   │
+│                                                                  │
 │  Guards against garbage:                                        │
 │  - Printed-text filter: if TrOCR output matches Tesseract        │
 │    full-page text, it's a form label — skip (not handwriting)    │
 │  - Ink-ratio check: skip nearly blank regions (<1% dark pixels)  │
 │  - Minimum confidence bar: only accept TrOCR output >0.6         │
 │                                                                  │
-│  Performance: ~70s for 14 field regions on CPU.                  │
+│  Performance: ~70s for 14 field regions on CPU (batch).          │
 │  Disabled by default; enable with `use_trocr=True`.              │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
@@ -153,7 +190,7 @@ Karatasi is an offline-first document processing pipeline. A scanned form enters
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 5: STREAMLIT UI (Week 3 — not yet built)                  │
+│  STAGE 5: STREAMLIT UI                                          │
 │                                                                  │
 │  Layout:                                                         │
 │  ┌──────────────────────────────────────────────────────┐        │
@@ -194,9 +231,9 @@ Karatasi is an offline-first document processing pipeline. A scanned form enters
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 6: EXPORT (Week 3 — not yet built)                       │
+│  STAGE 6: EXPORT                                                │
 │                                                                  │
-│  PDF Export (ReportLab):                                        │
+│  PDF Export (PyMuPDF):                                          │
 │  - Overlay filled text onto the original form PDF               │
 │  - Uses coordinates from layout detection to place text         │
 │    in the correct field positions                                │
@@ -220,12 +257,12 @@ This is the critical metric for the Africa Deep Tech Challenge. The target is 8G
 | OpenCV + Tesseract | ~250 MB | Shared libraries, loaded at startup |
 | TrOCR (handwriting model) | ~1.5 GB | PyTorch transformer (~300MB weights + runtime) |
 | LLM (Qwen2.5-1.5B-Q4_K_M) | ~2.5 GB | llama.cpp with mmap |
-| FAISS + sentence-transformers | ~150 MB | Not yet implemented |
 | PDF processing + misc | ~150 MB | PyMuPDF, ReportLab, PIL |
 | Application data | ~100 MB | Uploaded forms, temp files |
 | Cache + headroom | ~1.5 GB | Prevents OOM during spikes |
-| **Total (TrOCR + LLM loaded)** | **~6.0-7.0 GB** | Tight — may use swap |
-| **Fast path (no LLM, no TrOCR)** | **~2.5 GB** | ✅ Comfortably fits |
+| **Fast path (no LLM, no TrOCR)** | **~2.5 GB** | ✅ Comfortably fits in 8GB |
+| **TrOCR enabled (+1.5GB)** | **~4.0 GB** | ✅ Fits with room |
+| **Full stack (LLM + TrOCR)** | **~6.0-7.0 GB** | Tight — may use swap |
 
 ## Key Design Decisions
 
@@ -245,4 +282,7 @@ Phi-3-mini (3.8B) Q4 uses ~2.5GB. Llama 3 8B Q4 uses ~5.5GB. For form parsing (i
 Small vision-language models that can read handwriting from images (like TrOCR) are ~300MB weights. Larger VLMs that can do both detection and reading (like LLaVA-NeXT) are 7B+ and won't fit. The staged approach (layout detection → crop → TrOCR) is the most memory-efficient way to handle handwriting. Note that PyTorch adds ~1GB runtime overhead beyond the model weights.
 
 ### Why `use_llm` and `use_trocr` are separate flags?
-They serve independent purposes: LLM for structured text understanding (form type, field extraction) and TrOCR for image-to-text (handwriting reading). Both are disabled by default to keep the fast path under 12s. Users explicitly enable them for filled forms or ambiguous cases.
+They serve independent purposes: LLM for structured text understanding (form type, field extraction) and TrOCR for image-to-text (handwriting reading). Both are disabled by default to keep the fast path under 12s and under 2.5GB RAM. Users explicitly enable them for filled forms or ambiguous cases where the higher accuracy justifies the 1.5-4GB additional memory cost.
+
+### Why not always-on TrOCR + LLM?
+The target demo environment is a laptop with 8GB RAM and no GPU. Loading both models simultaneously consumes ~6-7GB, leaving only ~1GB for OS + other apps. By defaulting both to off, Karatasi runs in ~2.5GB with a 12s pipeline — comfortable on any modern laptop. The UI provides clear toggles so users can opt in when they need handwriting recognition or LLM-based field extraction.
