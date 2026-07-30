@@ -36,7 +36,7 @@ Working OCR pipeline: upload a scanned form → preprocessed image → extracted
   - Per-segment confidence scoring
   - Coordinate-space handling (scale_to_original parameter)
 - [x] Test on form labels: recall ~9/15 labels with text after coordinate fix
-- [x] Measure: full-page OCR in **~8-14s**, label OCR **~900ms** on 300 DPI scans
+- [x] Measure: full-page OCR in **~11s**, label OCR **~900ms** on 200 DPI scans
 
 **Day 4: Handwriting OCR (TrOCR)**
 - [x] Build `src/ocr/handwriting.py`:
@@ -59,68 +59,108 @@ Working OCR pipeline: upload a scanned form → preprocessed image → extracted
 ### Deliverables
 - ✅ Functional OCR module with `detect_layout()`, `ocr_image()`, `recognize_handwriting()`
 - ✅ Tested on 5 Kenyan government form scans (3 real forms + 2 web-portal PDFs)
-- ✅ Memory usage: **<500MB** for OCR pipeline (excluding LLM), TrOCR ~300MB cached
+- ✅ Fast-path memory: **<500MB** for OCR pipeline (excluding LLM/TrOCR)
 
 ---
 
 ## Week 2 (Aug 5 – 11): Form Understanding
 
 ### Goal
-Local LLM serving + form type detection + field extraction → structured JSON output.
+Form type detection + field extraction + unified pipeline → structured output under 12s.
 
 ### Tasks
 
 **Day 6: LLM Setup**
-- [ ] Set up llama.cpp Python bindings (llama-cpp-python)
-- [ ] Download Qwen2.5-1.5B-Q4_K_M GGUF model
-- [ ] Build `src/llm/serve.py`:
-  - Model loader with memory-efficient config
+- [x] Set up llama.cpp Python bindings (llama-cpp-python)
+- [x] Download Qwen2.5-1.5B-Q4_K_M GGUF model (1117MB)
+- [x] Build `src/llm/serve.py`:
+  - Model loader with lazy init + mmap
   - Context window: 2048 tokens
-  - Batch inference for multiple fields
-  - Automatic model unloading after idle timeout
-- [ ] Benchmark: <5 seconds per inference, <1.5GB RAM
+  - Automatic model unloading after 5min idle
+  - `get_server()` singleton accessor
+- [x] Benchmark: 2.9s per inference, 7 tok/s, ~2.5GB RAM
 
-**Day 7: Prompt Engineering — Form Type Detection**
-- [ ] Build `src/llm/prompts.py` with system prompt templates:
+**Day 7: Prompt Engineering — Form Type & Field Extraction**
+- [x] Build `src/llm/prompts.py` with system prompt templates:
   - System prompt: Kenyan government clerk persona (English + Swahili)
-  - Form type classifier prompt
-  - Field extraction prompt
-  - Swahili translation prompt
-- [ ] Implement few-shot examples per form type (3 examples each)
-- [ ] Build `src/forms/detector.py`:
-  - `detect_form_type(ocr_text) -> {"form_type": str, "confidence": float}`
-- [ ] Test on 10 form samples → >90% classification accuracy
+  - Form type classifier prompt (shortened for 1.5B model)
+  - Field extraction prompt (ultra-minimal: OCR + labels + JSON-only output)
+  - Language detection prompt
+- [x] Build `src/forms/detector.py`:
+  - `detect_form_type(ocr_text, use_llm=False)` — keyword detection as primary
+  - Regex patterns for 7 form types: ID_APPLICATION, LAND_BOARD, BIRTH_CERTIFICATE, BIRTH_LATE_REGISTRATION, BIRTH_REGISTRATION, KRA_PIN, DRIVING_LICENSE, UNKNOWN
+  - Confidence scoring: 0.50 + 0.15 per matched keyword (cap 0.90)
+  - LLM fallback when `use_llm=True` (disabled by default)
+  - Robust JSON parsing: finds `{...}` anywhere in verbose LLM output
+- [x] Test on 5 form samples → **100% classification accuracy** via keywords (0.90+ confidence)
 
 **Day 8: Form Templates**
-- [ ] Build template definitions in `src/forms/templates/`:
-  - `id_application.py` — Kenyan National ID application form
-  - `kra_pin.py` — KRA PIN registration form
-  - `land_board.py` — Land control board consent form
-  - `birth_certificate.py` — Birth certificate application
-  - Each template: expected labels, field positions, validation rules,
-    Swahili translations
-- [ ] Build `src/forms/fields.py`:
-  - Field extraction schema (label, value, confidence, coords, is_handwritten)
-  - Validation rules per field type (ID number format, phone format, date)
-  - Confidence aggregation
+- [x] Build field schemas inline in `src/forms/fields.py`:
+  - `ExtractedField` dataclass (key, label_en, label_sw, value, confidence, field_type, is_handwritten)
+  - `FieldSchema` dataclass (key, label_en, label_sw, field_type, validation, required)
+  - 4 form templates:
+    - **ID_APPLICATION**: 14 fields (serial_no, surname, first_name, other_names, date_of_birth, place_of_birth, district_of_birth, sex, height, occupation, marital_status, residence, signature, photo)
+    - **LAND_BOARD**: 8 fields (applicant_name, id_number, property_description, property_location, consent_type, consideration, signature, date)
+    - **BIRTH_LATE_REGISTRATION**: 11 fields (child_name, date_of_birth, place_of_birth, sex, father_name, mother_name, father_id, mother_id, informant_name, signature, date_registered)
+    - **BIRTH_CERTIFICATE**: 7 fields (child_name, date_of_birth, place_of_birth, sex, father_name, mother_name, registration_number)
+  - Validation rules: required, id_number (6-8 digits), phone (0XXXXXXXXX), date (DD/MM/YYYY), email, number
+  - `validate_field()` function per rule
 
 **Day 9: Field Extraction Pipeline**
-- [ ] Wire LLM to form templates:
-  - OCR output → LLM form type detection → select template → LLM field extraction
-- [ ] Structured output parsing (regex + JSON parsing with error recovery)
-- [ ] Confidence scoring: combine OCR confidence + LLM confidence
-- [ ] Edge cases: missing fields, extra text, torn corners
+- [x] Template-based extraction: `extract_fields(ocr_text, form_type, use_llm=False)` → fields with empty values
+- [x] LLM extraction: `extract_fields(ocr_text, form_type, use_llm=True)` → LLM fills values (disabled by default)
+- [x] `_merge_llm_with_template()` — template order preserved, LLM values merged
+- [x] `_parse_json_array()` — finds `[...]` anywhere in LLM output (handles markdown fences, leading text)
+- [x] `_template_fallback()` — returns template fields with empty values and 0.0 confidence
+- [x] Edge cases: blank form (all fields empty), web portal (early return), unknown form type (no fields)
 
-**Day 10: Integration + Buffer**
-- [ ] Integrate Week 1 (OCR) + Week 2 (LLM) into unified pipeline
-- [ ] End-to-end test: scan → JSON output on 10 forms
-- [ ] Fix issues, refine prompts, tune thresholds
-- [ ] Benchmark total pipeline time: <30 seconds per form
+**Day 10: Integration + Benchmark**
+- [x] Build `src/pipeline.py` — `process_form()` unified pipeline:
+  1. Load + preprocess (60-400ms)
+  2. Tesseract full-page OCR (~11s)
+  3. Web portal detection (early return if portal page)
+  4. Layout detection in preprocessed-space
+  5. Form type detection via keywords (<10ms)
+  6. Template field extraction (<1ms)
+  7. Optional TrOCR handwriting on field regions (disabled by default, ~70s)
+- [x] `use_llm` and `use_trocr` as independent boolean flags (both default False)
+- [x] Printed-text filter in TrOCR: cross-checks output against Tesseract full-page text
+- [x] Ink-ratio guard: skips nearly blank field regions (<1% dark pixels)
+- [x] End-to-end test on 5 samples:
+  - Form 1 (ID App): 11.5s, 14 fields empty (blank form) ✅
+  - Form 2 (Land Board): 8.4s, 8 fields empty ✅
+  - Form 3 (Birth B4): 1.0s, web portal detected ✅
+  - Form 4 (Birth B3): 12.7s, 11 fields empty ✅
+  - Form 5 (Birth A1): 1.1s, web portal detected ✅
+- [x] No garbage values — printed-text filter + ink-ratio guard + disabled TrOCR default eliminates false readings
+- [x] Benchmark: 3 runs, **avg 11.4s per form** (target: <30s) ✅
+- [x] Bottleneck identified: Tesseract OCR at 97% of pipeline time (10.9s)
+
+### Actual vs Planned
+
+| Item | Planned | Actual |
+|---|---|---|
+| Form type detection accuracy | >90% | **100%** (5/5 via keywords) |
+| Field extraction accuracy | >80% | **N/A on blank forms** (no handwriting test data available) |
+| Pipeline speed | <30s | **11.4s avg** (fast path) |
+| LLM inference | <5s | **2.9s** per call, but 45-85s for end-to-end field extraction |
+| Templates | 4+ | **4** (ID_APPLICATION, LAND_BOARD, BIRTH_LATE_REG, BIRTH_CERT) |
+| LLM usage | Primary classifier | **Disabled by default** — keywords are faster and more reliable |
+
+### Key Lessons
+1. **Keywords beat 1.5B LLM for form type detection** — 100% accuracy in <10ms vs 45-85s with hallucination risk
+2. **Tesseract is the pipeline bottleneck** at 97% of total time (~11s). No viable faster alternative for offline printed OCR.
+3. **Blank forms produce garbage with TrOCR** — form labels get read as "handwriting". Fix: printed-text filter using Tesseract full-page text overlap, plus ink-ratio check.
+4. **Small LLMs fabricate data** — the 1.5B model returns "1990-01-01" for a blank date field. Template-with-empty-values is the correct deterministic approach.
+5. **Separate `use_trocr` from `use_llm`** — they serve independent purposes (image-to-text vs text understanding).
 
 ### Deliverables
-- End-to-end pipeline: scanned form → structured JSON
-- 4 form templates defined and tested
-- Classification accuracy: >90%, field extraction: >80%
+- ✅ Unified pipeline: scanned form → structured fields (11.4s fast path)
+- ✅ Form type detection via keywords (100% accuracy on test set)
+- ✅ 4 form templates defined with field schemas + validation
+- ✅ Optional TrOCR handwriting with printed-text filter + ink-ratio guard
+- ✅ Optional LLM field extraction (disabled by default)
+- ✅ Memory (fast path): **<500MB** (TrOCR/LLM add 1.5-4GB when enabled)
 
 ---
 
@@ -250,11 +290,12 @@ Demo-ready application that judges can run on an 8GB laptop.
 
 ## Success Criteria
 
-| Metric | Target | How to Measure |
-|---|---|---|
-| Form type detection accuracy | >90% | Test on 20 labeled forms |
-| Field extraction accuracy | >80% | Compare extracted vs manual entry on 10 forms |
-| Memory usage | <6GB | `free -h` while running |
-| Inference speed | <30s per form | Stopwatch from upload to results |
-| Swahili support | All UI + outputs | Manual review |
-| One-command launch | Yes | Test on clean machine |
+| Metric | Target | Current | How to Measure |
+|---|---|---|---|
+| Form type detection accuracy | >90% | **100%** (5/5) | Test on 20 labeled forms |
+| Field extraction accuracy | >80% | N/A (no filled forms yet) | Compare extracted vs manual entry on 10 forms |
+| Memory usage (fast path) | <6GB | **<500MB** | `free -h` while running |
+| Memory usage (all models) | <6GB | **~4-7GB** (swap risk) | `free -h` while running |
+| Pipeline speed | <30s | **11.4s avg** (fast path) | Stopwatch per form |
+| Swahili support | All UI + outputs | **Not yet built** | Manual review |
+| One-command launch | Yes | **Not yet** (CLI only) | Test on clean machine |
