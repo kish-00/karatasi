@@ -40,6 +40,10 @@ class PreprocessResult:
     """Rotation angle corrected in degrees."""
     elapsed_ms: float
     """Total preprocessing time in milliseconds."""
+    auto_rotated: bool = False
+    """True if the image was auto-rotated (was upside-down/sideways)."""
+    blur_score: float = 0.0
+    """Laplacian variance — lower values mean blurrier image."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -241,16 +245,22 @@ def preprocess(
     # 2. Downscale if needed (before expensive ops)
     gray = _resize_if_needed(gray)
 
-    # 3. Adaptive threshold
+    # 3. Auto-rotate (fix upside-down/sideways scans)
+    gray, was_rotated, rotate_angle = auto_rotate(gray)
+
+    # 4. Blur detection (on the gray image before thresholding)
+    _, blur_score = detect_blur(gray)
+
+    # 5. Adaptive threshold
     binary = _adaptive_threshold(gray)
 
-    # 4. Deskew
+    # 6. Deskew
     deskewed, angle = _deskew(binary)
 
-    # 5. Denoise
+    # 7. Denoise
     cleaned = _denoise(deskewed)
 
-    # 6. DPI normalization
+    # 8. DPI normalization
     result = _scale_to_dpi(cleaned, original_dpi)
 
     elapsed = (time.perf_counter() - start) * 1000
@@ -259,6 +269,8 @@ def preprocess(
         original_size=original_size,
         deskew_angle=angle,
         elapsed_ms=elapsed,
+        auto_rotated=was_rotated,
+        blur_score=blur_score,
     )
 
 
@@ -322,6 +334,126 @@ def load_image(path: str | Path) -> ImageArray:
 
     msg = f"Could not load image: {path}"
     raise ValueError(msg)
+
+
+# ── Image Quality Detection ──────────────────────────────────────────
+
+
+def detect_blur(image: ImageArray, threshold: float = 100.0) -> tuple[bool, float]:
+    """Detect if an image is blurry using Laplacian variance.
+
+    The Laplacian operator measures second derivatives — a blurry image
+    has low variance in its Laplacian response.
+
+    Args:
+        image: Grayscale or BGR image.
+        threshold: Blur threshold (lower = stricter). 100 is a common
+                   threshold; values below indicate blur.
+
+    Returns:
+        (is_blurry, variance) — variance < threshold means blurry.
+    """
+    gray = _to_grayscale(image)
+    lap = cv2.Laplacian(gray, cv2.CV_64F)
+    variance = float(lap.var())
+    return variance < threshold, variance
+
+
+def _should_rotate_180(text: str) -> bool:
+    """Heuristic: check if OCR text appears upside-down (very sparse)."""
+    text = text.strip()
+    if len(text) < 20:
+        return False
+    # Upside-down text typically has very few recognized words
+    words = text.split()
+    return len(words) < 3
+
+
+def auto_rotate(image: ImageArray) -> tuple[ImageArray, bool, float]:
+    """Detect and correct image orientation using Tesseract OSD.
+
+    Tesseract's Orientation & Script Detection (PSM 0) returns the
+    page rotation in degrees. We rotate to 0 if needed.
+
+    Args:
+        image: Grayscale or BGR image.
+
+    Returns:
+        (corrected_image, was_rotated, angle_corrected_degrees).
+    """
+    gray = _to_grayscale(image)
+    try:
+        import pytesseract
+
+        # Use PSM 0 for orientation detection
+        osd = pytesseract.image_to_osd(gray, config="--psm 0 -c min_characters_to_try=10")
+        angle = 0
+        for line in osd.splitlines():
+            if "Rotate:" in line:
+                angle = int(line.split(":")[1].strip())
+                break
+
+        if angle == 0:
+            return image, False, 0.0
+
+        h, w = gray.shape[:2]
+        center = (w // 2, h // 2)
+        rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+        cos_abs = abs(rotation_matrix[0, 0])
+        sin_abs = abs(rotation_matrix[0, 1])
+        new_w = int(h * sin_abs + w * cos_abs)
+        new_h = int(h * cos_abs + w * sin_abs)
+        rotation_matrix[0, 2] += new_w / 2 - center[0]
+        rotation_matrix[1, 2] += new_h / 2 - center[1]
+
+        corrected = cv2.warpAffine(
+            gray, rotation_matrix, (new_w, new_h),
+            flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE,
+        )
+        return corrected, True, float(angle)
+    except Exception:
+        # Tesseract OSD may fail on very small or non-text images
+        return image, False, 0.0
+
+
+def is_likely_form(full_text: str, num_regions: int = 0) -> tuple[bool, str]:
+    """Heuristic check: does the OCR text look like a government form?
+
+    Real forms have structured text with form-specific keywords and
+    a minimum number of layout regions.  A photo of a cat will produce
+    sparse OCR with no form keywords.
+
+    Args:
+        full_text: Tesseract full-page OCR output.
+        num_regions: Number of layout regions detected.
+
+    Returns:
+        (is_form, reason) — reason explains if it's not a form.
+    """
+    text = full_text.strip()
+    if not text:
+        return False, "No text detected — image may be blank or non-form content."
+
+    # Short text + very few regions suggests non-form
+    word_count = len(text.split())
+    if word_count < 5 and num_regions < 5:
+        return False, f"Very little text detected ({word_count} words, {num_regions} regions). This may not be a form."
+
+    # Check for form-like keywords
+    form_keywords = [
+        "form", "application", "registration", "certificate",
+        "surname", "first name", "date of birth", "signature",
+        "id number", "sex", "occupation", "residence",
+        "fomu", "maombi", "usajili", "chet",
+        "jina", "tarehe", "sahihi",
+    ]
+    text_lower = text.lower()
+    matched = sum(1 for kw in form_keywords if kw in text_lower)
+
+    if matched == 0 and word_count < 20:
+        return False, f"No form-related keywords found ({word_count} words). This may not be a government form."
+
+    return True, ""
 
 
 # ── Layout Detection ────────────────────────────────────────────────
