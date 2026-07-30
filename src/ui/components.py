@@ -89,6 +89,9 @@ def render_sidebar_info(result: PipelineResult | None, s: Strings) -> None:
 
     st.sidebar.write(f"{s.processing_time_label}: {result.elapsed_ms / 1000:.1f}s")
 
+    if result.page_count > 1:
+        st.sidebar.write(f"📄 {s.pages_label}: {result.page_count}")
+
 
 # ── Form Display ─────────────────────────────────────────────────────
 

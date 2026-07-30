@@ -62,6 +62,7 @@ def _build(lang: Language) -> SimpleNamespace:
         detected_form_label=s("Detected Form", "Fomu Iliyotambuliwa"),
         form_type_label=s("Form Type", "Aina ya Fomu"),
         confidence_label=s("Confidence", "Uhakika"),
+        pages_label=s("Pages", "Kurasa"),
         override_form_type=s("Override form type (if incorrect)", "Badilisha aina ya fomu (ikiwa si sahihi)"),
         override_apply_label=s("Apply", "Weka"),
         fields_label=s("Fields", "Sehemu"),

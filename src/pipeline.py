@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
+import cv2
 import numpy as np
 
 from src.forms.detector import detect_form_type
@@ -23,6 +24,7 @@ from src.ocr.handwriting import recognize_batch
 from src.ocr.preprocess import (
     BoundingBox,
     LayoutResult,
+    PreprocessResult,
     detect_layout,
     is_likely_form,
     is_web_portal,
@@ -72,6 +74,8 @@ class PipelineResult:
     elapsed_ms: float = 0.0
     manual_override: bool = False
     """True if the form type was manually overridden by the user (vs auto-detected)."""
+    page_count: int = 1
+    """Number of pages processed (for multi-page PDFs)."""
     blur_warning: str = ""
     """Non-empty if the image appears blurry (low quality)."""
     rotate_warning: str = ""
@@ -84,6 +88,36 @@ class PipelineResult:
         if not self.fields:
             return 0.0
         return sum(f.confidence for f in self.fields) / len(self.fields)
+
+
+def _pdf_page_count(path: str | Path) -> int:
+    """Return the number of pages in a PDF (0 for non-PDF files)."""
+    path = Path(path)
+    if path.suffix.lower() not in {".pdf"}:
+        return 0
+    try:
+        import fitz
+        doc = fitz.open(str(path))
+        count = doc.page_count
+        doc.close()
+        return count
+    except Exception:
+        return 0
+
+
+def _process_single_page(
+    img: np.ndarray,
+    *,
+    original_dpi: float = 200.0,
+) -> tuple[PreprocessResult, str]:
+    """Run preprocess + OCR on a single image page.
+
+    Returns:
+        (preprocess_result, full_text).
+    """
+    proc = preprocess(img, original_dpi=original_dpi)
+    ocr_result = ocr_image(proc.image)
+    return proc, ocr_result.full_text
 
 
 def process_form(
@@ -108,22 +142,39 @@ def process_form(
     """
     start = time.perf_counter()
 
-    # ── 1. Load + Preprocess ──
-    img = load_image(str(image_path))
-    proc = preprocess(img, original_dpi=original_dpi)
-
-    # ── 2. Full-page Tesseract OCR (cached by content hash) ──
-    img_hash = _image_content_hash(str(image_path))
-    if img_hash in _ocr_cache:
-        full_text = _ocr_cache[img_hash]
-        logger.debug("OCR cache hit for %s", image_path)
+    # ── 1. Detect page count; load + preprocess + OCR each page ──
+    page_count = _pdf_page_count(image_path)
+    if page_count > 1:
+        # Multi-page PDF: iterate all pages, combine OCR text
+        import fitz
+        doc = fitz.open(str(image_path))
+        all_texts: list[str] = []
+        first_proc: PreprocessResult | None = None
+        page_imgs: list[np.ndarray] = []
+        for page_idx in range(page_count):
+            page = doc[page_idx]
+            pix = page.get_pixmap(dpi=200)
+            img_array = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+                pix.height, pix.width, 3
+            )
+            img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+            proc, text = _process_single_page(img_bgr, original_dpi=original_dpi)
+            all_texts.append(text)
+            page_imgs.append(img_bgr)
+            if first_proc is None:
+                first_proc = proc
+        doc.close()
+        full_text = "\n\n--- Page Break ---\n\n".join(all_texts)
+        proc = first_proc
+        img = page_imgs[0]
+        page_count = page_count
     else:
-        ocr_result = ocr_image(proc.image)
-        full_text = ocr_result.full_text
-        _ocr_cache[img_hash] = full_text
-        logger.debug("OCR cache miss for %s (ran Tesseract)", image_path)
+        # Single image or single-page PDF
+        img = load_image(str(image_path))
+        proc, full_text = _process_single_page(img, original_dpi=original_dpi)
+        page_count = 1
 
-    # ── 3. Web-portal check ──
+    # ── 2. Web-portal check ──
     if is_web_portal(full_text):
         elapsed = (time.perf_counter() - start) * 1000
         return PipelineResult(
@@ -132,9 +183,10 @@ def process_form(
             full_text=full_text,
             is_web_portal=True,
             elapsed_ms=elapsed,
+            page_count=page_count,
         )
 
-    # ── 4. Quality warnings ──
+    # ── 3. Quality warnings (from first page) ──
     blur_warning = ""
     rotate_warning = ""
     if proc.blur_score < 50:
@@ -144,24 +196,24 @@ def process_form(
     if proc.auto_rotated:
         rotate_warning = "Image was automatically rotated (was upside-down). Verify field positions."
 
-    # ── 5. Layout detection (preprocessed-space for OCR) ──
+    # ── 4. Layout detection (first page, preprocessed-space) ──
     layout = detect_layout(proc.image, proc.original_size, scale_to_original=False)
 
-    # ── 6. Non-form check ──
+    # ── 5. Non-form check ──
     non_form_warning = ""
     is_form, non_form_reason = is_likely_form(full_text, len(layout.regions))
     if not is_form:
         non_form_warning = non_form_reason
 
-    # ── 7. Form type detection ──
+    # ── 6. Form type detection ──
     detection = detect_form_type(full_text, use_llm=use_llm, language=language)
 
-    # ── 8. Field extraction ──
+    # ── 7. Field extraction ──
     fields = extract_fields(
         full_text, detection.form_type, use_llm=use_llm, language=language
     )
 
-    # ── 7. Handwriting OCR on field regions (when explicitly enabled) ──
+    # ── 8. Handwriting OCR on first-page field regions (when enabled) ──
     hw_confidence = 0.0
     field_regions = [r for r in layout.regions if r.region_type == "field"]
     if use_trocr:
@@ -179,6 +231,7 @@ def process_form(
         layout=layout,
         full_text=full_text,
         elapsed_ms=elapsed,
+        page_count=page_count,
         blur_warning=blur_warning,
         rotate_warning=rotate_warning,
         non_form_warning=non_form_warning,
