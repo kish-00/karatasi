@@ -6,6 +6,7 @@ supporting English and Swahili display.
 
 from __future__ import annotations
 
+import dataclasses
 from typing import TYPE_CHECKING
 
 import streamlit as st
@@ -116,18 +117,7 @@ def display_fields(result: PipelineResult, s: Strings) -> list[ExtractedField]:
     updated_fields: list[ExtractedField] = []
     for i, field in enumerate(fields):
         edited = st.session_state.get(f"_field_edit_{i}", field.value)
-        updated_fields.append(
-            ExtractedField(
-                key=field.key,
-                label_en=field.label_en,
-                label_sw=field.label_sw,
-                value=edited,
-                confidence=field.confidence,
-                field_type=field.field_type,
-                is_handwritten=field.is_handwritten,
-                validated=field.validated,
-            )
-        )
+        updated_fields.append(dataclasses.replace(field, value=edited))
 
     return updated_fields
 

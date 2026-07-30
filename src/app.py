@@ -6,6 +6,7 @@ Usage:
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 import tempfile
 from pathlib import Path
@@ -154,15 +155,7 @@ if result and not result.is_web_portal:
 
     # ── Export section ─────────────────────────────────────────────
     st.markdown(f"### {s.export_header}")
-    export_result = PipelineResult(
-        form_type=result.form_type,
-        form_type_confidence=result.form_type_confidence,
-        fields=updated_fields,
-        layout=result.layout,
-        full_text=result.full_text,
-        is_web_portal=result.is_web_portal,
-        elapsed_ms=result.elapsed_ms,
-    )
+    export_result = dataclasses.replace(result, fields=updated_fields)
     render_export_buttons(export_result, original_path, s)
 
     # ── Raw OCR text (expandable) ──────────────────────────────────

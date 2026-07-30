@@ -47,7 +47,7 @@ class FieldSchema:
     required: bool = False
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class ExtractedField:
     """Single extracted field value with metadata."""
 

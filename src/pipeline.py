@@ -114,7 +114,7 @@ def process_form(
 
     for i, field in enumerate(fields):
         if i < len(field_regions):
-            object.__setattr__(field, "region_id", i)
+            field.region_id = i
 
     elapsed = (time.perf_counter() - start) * 1000
     return PipelineResult(
@@ -190,9 +190,9 @@ def _run_handwriting_ocr(
                     )
                     continue
                 merged_conf = max(field.confidence, hw.confidence * 0.85)
-                object.__setattr__(field, "value", hw.text)
-                object.__setattr__(field, "confidence", merged_conf)
-                object.__setattr__(field, "is_handwritten", True)
+                field.value = hw.text
+                field.confidence = merged_conf
+                field.is_handwritten = True
                 confidences.append(hw.confidence)
         except Exception:
             logger.debug("Handwriting OCR failed on field %s", field.key)
