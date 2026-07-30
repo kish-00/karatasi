@@ -7,33 +7,56 @@ Wires OCR (preprocess + layout + Tesseract + TrOCR) with LLM
 from __future__ import annotations
 
 import dataclasses
+import hashlib
 import logging
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-import cv2
 import numpy as np
 
 from src.forms.detector import detect_form_type
 from src.forms.fields import ExtractedField, extract_fields
 from src.llm.prompts import FormType
-from src.ocr.handwriting import recognize_handwriting
+from src.ocr.handwriting import recognize_batch
 from src.ocr.preprocess import (
     BoundingBox,
     LayoutResult,
-    PreprocessResult,
     detect_layout,
+    is_likely_form,
     is_web_portal,
     load_image,
     preprocess,
 )
-from src.ocr.typed import ocr_image, ocr_region
+from src.ocr.typed import ocr_image
 
 logger = logging.getLogger(__name__)
 
 Language = Literal["English", "Swahili"]
+
+# ── OCR result cache ─────────────────────────────────────────────────
+# Caches full-page Tesseract output keyed by image content hash.
+# This avoids re-running the ~11s Tesseract pass when the user
+# changes the form type (re_extract_fields) on the same image.
+
+_ocr_cache: dict[str, str] = {}
+"""Maps content hash -> full_text, evicted on new uploads."""
+
+
+def _image_content_hash(path: str) -> str:
+    """Fast content hash for an image file (first 64KB + size)."""
+    h = hashlib.md5(usedforsecurity=False)
+    with open(path, "rb") as f:
+        chunk = f.read(65536)
+        h.update(chunk)
+    h.update(str(Path(path).stat().st_size).encode())
+    return h.hexdigest()
+
+
+def invalidate_ocr_cache() -> None:
+    """Clear the OCR result cache (call when a new image is uploaded)."""
+    _ocr_cache.clear()
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +72,12 @@ class PipelineResult:
     elapsed_ms: float = 0.0
     manual_override: bool = False
     """True if the form type was manually overridden by the user (vs auto-detected)."""
+    blur_warning: str = ""
+    """Non-empty if the image appears blurry (low quality)."""
+    rotate_warning: str = ""
+    """Non-empty if the image was auto-rotated (was upside-down)."""
+    non_form_warning: str = ""
+    """Non-empty if the image may not be a government form."""
 
     @property
     def mean_confidence(self) -> float:
@@ -83,9 +112,16 @@ def process_form(
     img = load_image(str(image_path))
     proc = preprocess(img, original_dpi=original_dpi)
 
-    # ── 2. Full-page Tesseract OCR ──
-    ocr_result = ocr_image(proc.image)
-    full_text = ocr_result.full_text
+    # ── 2. Full-page Tesseract OCR (cached by content hash) ──
+    img_hash = _image_content_hash(str(image_path))
+    if img_hash in _ocr_cache:
+        full_text = _ocr_cache[img_hash]
+        logger.debug("OCR cache hit for %s", image_path)
+    else:
+        ocr_result = ocr_image(proc.image)
+        full_text = ocr_result.full_text
+        _ocr_cache[img_hash] = full_text
+        logger.debug("OCR cache miss for %s (ran Tesseract)", image_path)
 
     # ── 3. Web-portal check ──
     if is_web_portal(full_text):
@@ -98,13 +134,29 @@ def process_form(
             elapsed_ms=elapsed,
         )
 
-    # ── 4. Layout detection (preprocessed-space for OCR) ──
+    # ── 4. Quality warnings ──
+    blur_warning = ""
+    rotate_warning = ""
+    if proc.blur_score < 50:
+        blur_warning = f"Image appears blurry (score: {proc.blur_score:.0f}). OCR accuracy may be reduced."
+    elif proc.blur_score < 100:
+        blur_warning = f"Image may be slightly blurry (score: {proc.blur_score:.0f})."
+    if proc.auto_rotated:
+        rotate_warning = "Image was automatically rotated (was upside-down). Verify field positions."
+
+    # ── 5. Layout detection (preprocessed-space for OCR) ──
     layout = detect_layout(proc.image, proc.original_size, scale_to_original=False)
 
-    # ── 5. Form type detection ──
+    # ── 6. Non-form check ──
+    non_form_warning = ""
+    is_form, non_form_reason = is_likely_form(full_text, len(layout.regions))
+    if not is_form:
+        non_form_warning = non_form_reason
+
+    # ── 7. Form type detection ──
     detection = detect_form_type(full_text, use_llm=use_llm, language=language)
 
-    # ── 6. Field extraction ──
+    # ── 8. Field extraction ──
     fields = extract_fields(
         full_text, detection.form_type, use_llm=use_llm, language=language
     )
@@ -127,6 +179,9 @@ def process_form(
         layout=layout,
         full_text=full_text,
         elapsed_ms=elapsed,
+        blur_warning=blur_warning,
+        rotate_warning=rotate_warning,
+        non_form_warning=non_form_warning,
     )
 
 
@@ -182,6 +237,7 @@ def _run_handwriting_ocr(
 ) -> float:
     """Run TrOCR on field regions and update field values.
 
+    Uses batch inference (loads model once for all regions).
     Filters out TrOCR output that matches Tesseract-printed text
     (i.e., form labels read as handwriting).
 
@@ -198,7 +254,11 @@ def _run_handwriting_ocr(
         if len(word) > 1:
             printed_tokens.add(word)
 
-    confidences: list[float] = []
+    # Prepare crops for all fields that need TrOCR
+    crop_indices: list[int] = []
+    crops: list[np.ndarray] = []
+    h, w = preprocessed.shape[:2]
+
     for i, field in enumerate(fields):
         if i >= len(field_regions):
             break
@@ -206,7 +266,6 @@ def _run_handwriting_ocr(
             continue
 
         region = field_regions[i]
-        h, w = preprocessed.shape[:2]
         x1 = max(0, region.x - 4)
         y1 = max(0, region.y - 4)
         x2 = min(w, region.x + region.w + 4)
@@ -224,24 +283,36 @@ def _run_handwriting_ocr(
         if ink_ratio < 0.01:
             continue
 
-        try:
-            hw = recognize_handwriting(crop, unload_after=False)
-            if hw.text and hw.confidence > 0.6:
-                # Skip if output matches printed text (form label, not handwriting)
-                hw_words = set(hw.text.lower().split())
-                overlap = hw_words & printed_tokens
-                if overlap:
-                    logger.debug(
-                        "Skipping TrOCR on %s: matches printed text: %s",
-                        field.key, hw.text[:40]
-                    )
-                    continue
-                merged_conf = max(field.confidence, hw.confidence * 0.85)
-                field.value = hw.text
-                field.confidence = merged_conf
-                field.is_handwritten = True
-                confidences.append(hw.confidence)
-        except Exception:
-            logger.debug("Handwriting OCR failed on field %s", field.key)
+        crop_indices.append(i)
+        crops.append(crop)
+
+    if not crops:
+        return 0.0
+
+    # Run batch inference (loads model once, unloads after)
+    try:
+        batch_results = recognize_batch(crops, unload_after=True)
+    except Exception:
+        logger.exception("Batch TrOCR inference failed")
+        return 0.0
+
+    confidences: list[float] = []
+    for idx, hw in zip(crop_indices, batch_results):
+        field = fields[idx]
+        if hw.text and hw.confidence > 0.6:
+            # Skip if output matches printed text (form label, not handwriting)
+            hw_words = set(hw.text.lower().split())
+            overlap = hw_words & printed_tokens
+            if overlap:
+                logger.debug(
+                    "Skipping TrOCR on %s: matches printed text: %s",
+                    field.key, hw.text[:40],
+                )
+                continue
+            merged_conf = max(field.confidence, hw.confidence * 0.85)
+            field.value = hw.text
+            field.confidence = merged_conf
+            field.is_handwritten = True
+            confidences.append(hw.confidence)
 
     return float(np.mean(confidences)) if confidences else 0.0
