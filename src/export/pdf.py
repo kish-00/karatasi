@@ -72,11 +72,20 @@ def _overlay_pdf(
     original_path: Path,
     output_path: Path,
 ) -> None:
-    """Overlay fields onto the first page of a PDF form."""
-    doc = fitz.open(str(original_path))
-    page = doc[0]
+    """Overlay fields onto each page of a PDF form.
 
-    _apply_overlays(page, result, page.rect.width, page.rect.height)
+    Layout regions are from the first page only; overlay is applied
+    to page 0 where coordinates match. Other pages are preserved
+    unmodified in the output.
+    """
+    doc = fitz.open(str(original_path))
+
+    for page_num in range(doc.page_count):
+        page = doc[page_num]
+        # Apply overlays only to the first page where layout data exists
+        if page_num == 0:
+            _apply_overlays(page, result, page.rect.width, page.rect.height)
+        # Remaining pages pass through unmodified
 
     doc.save(str(output_path))
     doc.close()
