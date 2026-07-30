@@ -81,13 +81,17 @@ FIELD_EXTRACTION_PROMPT_TEMPLATE = """{system}
 {lang}
 
 Form: {form_type}
-Labels: {labels_str}
+{labels_section}
 
 OCR: {ocr_text}
 
 Extract fields as JSON array:
 [{{"label":"..","value":"..","confidence":0.9,"field_type":"text"}}]
 JSON:"""  # noqa: E501
+
+FIELD_EXTRACTION_NO_TEMPLATE = """When no known form labels are provided, infer field names from the
+OCR text itself. Look for section headers, underlined text, and
+label-value pairs. Use the English label text as-is."""  # noqa: E501
 
 
 def extract_fields_prompt(
@@ -99,12 +103,15 @@ def extract_fields_prompt(
 ) -> str:
     """Build the prompt for field extraction."""
     lang = "Swahili" if language == "Swahili" else "English"
-    labels_str = ", ".join(known_labels or [])
+    if known_labels:
+        labels_section = f"Known field labels: {', '.join(known_labels)}"
+    else:
+        labels_section = FIELD_EXTRACTION_NO_TEMPLATE
     return FIELD_EXTRACTION_PROMPT_TEMPLATE.format(
         system=SYSTEM_PROMPT,
         lang=lang,
         form_type=form_type.value,
-        labels_str=labels_str or "(unknown)",
+        labels_section=labels_section,
         ocr_text=ocr_text[:1500],
     )
 

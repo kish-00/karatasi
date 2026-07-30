@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 
-from src.forms.fields import ExtractedField
+from src.forms.fields import ExtractedField, _label_to_snake_key
 
 
 def test_edited_field_preserves_all_attributes():
@@ -54,3 +54,13 @@ def test_unfrozen_mutation():
     assert field.value == "Mutated"
     assert field.confidence == 0.95
     assert field.region_id == 1
+
+
+def test_label_to_snake_key():
+    """_label_to_snake_key must produce clean snake_case keys from arbitrary labels."""
+    assert _label_to_snake_key("Full Name", 0) == "full_name"
+    assert _label_to_snake_key("ID Number", 1) == "id_number"
+    assert _label_to_snake_key("Date of Birth (DD/MM/YYYY)", 2) == "date_of_birth"
+    assert _label_to_snake_key("Father's Name", 3) == "father_s_name"
+    assert _label_to_snake_key("", 4) == "field_4"
+    assert _label_to_snake_key("  ", 5) == "field_5"

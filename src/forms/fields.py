@@ -278,6 +278,8 @@ def _merge_llm_with_template(
         key = _label_to_key(label, template_map)
         if not key and template:
             key = f"field_{len(llm_map)}"
+        elif not key:
+            key = _label_to_snake_key(label, len(llm_map))
 
         try:
             ft = FieldType(field_type)
@@ -334,6 +336,30 @@ def _label_to_key(label: str, template_map: dict[str, FieldSchema]) -> str | Non
             return key
 
     return None
+
+
+_SNAKE_RE = re.compile(r"(?<=[a-z])[A-Z]|[^a-zA-Z0-9]+")
+
+
+def _label_to_snake_key(label: str, fallback_idx: int) -> str:
+    """Convert a human-readable label to a snake_case field key.
+
+    Examples:
+        "Full Name" → "full_name"
+        "ID Number" → "id_number"
+        "Date of Birth (DD/MM/YYYY)" → "date_of_birth"
+    """
+    clean = label.strip()
+    if not clean:
+        return f"field_{fallback_idx}"
+    # Strip trailing parenthetical suffixes like (DD/MM/YYYY)
+    clean = re.sub(r"\s*\([^)]*\)\s*$", "", clean)
+    # Convert spaces/punctuation to underscores, lowercase
+    snake = _SNAKE_RE.sub("_", clean).strip("_").lower()
+    # Collapse consecutive underscores
+    snake = re.sub(r"_+", "_", snake)
+    # Handle empty after sanitization
+    return snake or f"field_{fallback_idx}"
 
 
 def _template_fallback(

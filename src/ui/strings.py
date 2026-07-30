@@ -59,6 +59,7 @@ def _build(lang: Language) -> SimpleNamespace:
         form_type_label=s("Form Type", "Aina ya Fomu"),
         confidence_label=s("Confidence", "Uhakika"),
         override_form_type=s("Override form type (if incorrect)", "Badilisha aina ya fomu (ikiwa si sahihi)"),
+        override_apply_label=s("Apply", "Weka"),
         fields_label=s("Fields", "Sehemu"),
         processing_time_label=s("Time", "Muda"),
         # ── Fields ──
@@ -151,8 +152,8 @@ _FORM_TYPE_LABELS: dict[str, dict[Language, str]] = {
         "Swahili": "Maombi ya Leseni ya Udereva",
     },
     "UNKNOWN": {
-        "English": "Unknown Form Type",
-        "Swahili": "Aina ya Fomu Haijulikani",
+        "English": "Unrecognized Form (inferred fields)",
+        "Swahili": "Fomu Isiyotambulika (sehemu zilizokadiriwa)",
     },
 }
 

@@ -19,6 +19,7 @@ from src.ui.components import (
     display_form_summary,
     language_selector,
     render_export_buttons,
+    render_form_type_override,
     render_sidebar_info,
 )
 from src.ui.strings import get_strings
@@ -148,6 +149,9 @@ if result and not result.is_web_portal:
 
     # Summary row
     display_form_summary(result, s)
+
+    # Form type override
+    render_form_type_override(result, s)
 
     # Editable fields
     st.markdown(f"### {s.extracted_fields_label}")
