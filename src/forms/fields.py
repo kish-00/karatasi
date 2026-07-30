@@ -160,11 +160,39 @@ _BIRTH_CERT_FIELDS: list[FieldSchema] = [
     FieldSchema("registration_number", "Registration No.", "Nambari ya Usajili", FieldType.TEXT),
 ]
 
+_KRA_PIN_FIELDS: list[FieldSchema] = [
+    FieldSchema("applicant_name", "Applicant Name", "Jina la Mwombaji", FieldType.TEXT, ["required"]),
+    FieldSchema("id_number", "ID/Passport No.", "Nambari ya Kitambulisho/Pasi", FieldType.TEXT, ["id_number"]),
+    FieldSchema("date_of_birth", "Date of Birth", "Tarehe ya Kuzaliwa", FieldType.DATE, ["date"]),
+    FieldSchema("phone", "Phone Number", "Nambari ya Simu", FieldType.TEXT, ["phone"]),
+    FieldSchema("email", "Email Address", "Barua Pepe", FieldType.TEXT, ["email"]),
+    FieldSchema("postal_address", "Postal Address", "Anwani ya Posta", FieldType.TEXT),
+    FieldSchema("tax_registration_type", "Registration Type", "Aina ya Usajili", FieldType.TEXT),
+    FieldSchema("signature", "Signature", "Sahihi", FieldType.SIGNATURE, ["required"]),
+    FieldSchema("date", "Date", "Tarehe", FieldType.DATE, ["date"]),
+]
+
+_DRIVING_LICENSE_FIELDS: list[FieldSchema] = [
+    FieldSchema("applicant_name", "Applicant Name", "Jina la Mwombaji", FieldType.TEXT, ["required"]),
+    FieldSchema("id_number", "ID Number", "Nambari ya Kitambulisho", FieldType.TEXT, ["id_number"]),
+    FieldSchema("date_of_birth", "Date of Birth", "Tarehe ya Kuzaliwa", FieldType.DATE, ["date", "required"]),
+    FieldSchema("sex", "Sex", "Jinsia", FieldType.TEXT),
+    FieldSchema("phone", "Phone Number", "Nambari ya Simu", FieldType.TEXT, ["phone"]),
+    FieldSchema("postal_address", "Postal Address", "Anwani ya Posta", FieldType.TEXT),
+    FieldSchema("license_type", "License Type", "Aina ya Leseni", FieldType.TEXT, ["required"]),
+    FieldSchema("medical_fitness", "Medical Fitness", "Ustahiki wa Kiafya", FieldType.CHECKBOX),
+    FieldSchema("signature", "Signature", "Sahihi", FieldType.SIGNATURE, ["required"]),
+    FieldSchema("date", "Date", "Tarehe", FieldType.DATE, ["date"]),
+    FieldSchema("photo", "Passport Photo", "Picha", FieldType.PHOTO),
+]
+
 _TEMPLATES: dict[FormType, list[FieldSchema]] = {
     FormType.ID_APPLICATION: _ID_APPLICATION_FIELDS,
     FormType.LAND_BOARD: _LAND_BOARD_FIELDS,
     FormType.BIRTH_LATE_REGISTRATION: _BIRTH_LATE_REG_FIELDS,
     FormType.BIRTH_CERTIFICATE: _BIRTH_CERT_FIELDS,
+    FormType.KRA_PIN: _KRA_PIN_FIELDS,
+    FormType.DRIVING_LICENSE: _DRIVING_LICENSE_FIELDS,
 }
 
 
