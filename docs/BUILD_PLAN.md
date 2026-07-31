@@ -172,49 +172,75 @@ Self-contained Streamlit application with English/Swahili interface, editable fi
 ### Tasks
 
 **Day 11: Streamlit Shell**
-- [ ] Build `src/app.py` — main Streamlit app
-- [ ] File upload widget (PDF, JPG, PNG) with drag-and-drop
-- [ ] Language selector (English/Swahili) — persists across reruns
-- [ ] Session state management for form data across interactions
-- [ ] `src/ui/components.py` — reusable UI components
+- [x] Build `src/app.py` — main Streamlit app
+- [x] File upload widget (PDF, JPG, PNG, TIFF) with drag-and-drop
+- [x] Language selector (English/Swahili) — persists across reruns via session state
+- [x] Session state management for form data across interactions
+- [x] `src/ui/components.py` — reusable UI components (@st.fragment pattern)
+- [x] Sidebar opt-in toggles for TrOCR (handwriting) and LLM (field extraction)
 
 **Day 12: Preview + Results**
-- [ ] Original form preview panel (image display)
-- [ ] Detected regions overlay (bounding boxes color-coded by type)
-- [ ] Extracted fields display:
-  - Editable text inputs for each field
-  - Confidence indicator (colored dot: green/yellow/red)
-  - "Verified" checkbox per field
-- [ ] Form type selector (if auto-detection is wrong, user can override)
+- [x] Original form preview panel (image display; PDF page 1 rendered via PyMuPDF)
+- [x] Detected regions overlay (bounding boxes color-coded by type: label/field/checkbox/signature/photo/unknown, with legend)
+- [x] Extracted fields display:
+  - Editable text inputs for each field (edits preserve region_id for PDF overlay)
+  - Confidence indicator (colored badge: green ≥90%, orange ≥70%, red below)
+  - "Verified" checkbox per field → sets `ExtractedField.validated` (exported to JSON)
+- [x] Form type selector (dropdown override re-extracts fields with `manual_override=True`)
 
 **Day 13: Swahili UI**
-- [ ] Language strings file (`src/ui/strings.py`):
-  - All UI text in English + Swahili
+- [x] Language strings file (`src/ui/strings.py`):
+  - All UI text in English + Swahili (SimpleNamespace, cached per language)
   - Field label translations (e.g., "Full Name" → "Jina Kamili")
   - Error messages, tooltips, button labels
-- [ ] Language toggle switches all UI text dynamically
-- [ ] Swahili prompt mode: when Swahili is selected, LLM prompts are in Swahili
+  - Form-type labels (e.g., "ID Application (Form 136A)" → "Maombi ya Kitambulisho")
+- [x] Language toggle switches all UI text dynamically
+- [x] Swahili prompt mode: LLM system prompt + field extraction prompts switch to Swahili
 
 **Day 14: Export**
-- [ ] `src/export/pdf.py` — PDF generation:
-  - Overlay text onto original form coordinates
-  - Font choice: DejaVu Sans (supports Swahili characters)
-  - Signature image embedding
-- [ ] JSON export: form data as structured JSON file
-- [ ] Download buttons in Streamlit
+- [x] `src/export/pdf.py` — PDF generation:
+  - Overlay text onto original form coordinates (preprocessed-space → PDF point scaling)
+  - Font choice: DejaVu Sans (supports Swahili characters), resolved from system font dirs with `KARATASI_DEJAVU_FONT` override; falls back to built-in Helvetica
+  - Signature/photo image embedding: empty SIGNATURE/PHOTO fields have their region crop embedded as an image (ink-ratio guard skips blank regions)
+- [x] JSON export: form data as structured JSON (source, confidence, validated, flag fields)
+- [x] Download buttons in Streamlit (PDF + JSON)
 
 **Day 15-16: Polish + Buffer**
-- [ ] Loading states and progress indicators
-- [ ] Error handling (bad scans, wrong orientation, unsupported forms)
-- [ ] Performance optimization (model loading, caching, lazy evaluation)
-- [ ] Responsive layout (works on 1366x768 laptop screens)
-- [ ] Package as single-launch command
+- [x] Loading states and progress indicators (st.spinner on process)
+- [x] Error handling: blur detection, auto-rotate, non-form heuristics, 20MB file size guard, graceful export-failure fallback
+- [x] Performance optimization: OCR result cache (hash-keyed), batch TrOCR inference, lazy model imports, region preview render in preprocessed space (no re-OCR)
+- [x] Multipage PDF support: iterate all pages, combine OCR text, export preserves all pages
+- [~] Responsive layout — `layout="wide"` configured; not hardware-verified on 1366x768
+- [x] Package as single-launch command: `streamlit run src/app.py`
+
+### Actual vs Planned
+
+| Item | Planned | Actual |
+|---|---|---|
+| Streamlit app | Full UI | **Working dashboard**: upload → process → summary → preview → edit → export |
+| Form preview | Original scan panel | **Original scan + color-coded regions overlay** (both in expanders) |
+| Editable fields | Inputs + confidence + verified | **All three**: editable inputs, colored confidence badge, Verified checkbox |
+| Form type override | Selector if detection wrong | **Dropdown + re-extract**; `manual_override` flag flows to JSON export |
+| Swahili support | All UI + outputs | **All UI strings, form-type labels, and LLM prompts** bilingual |
+| PDF export | DejaVu Sans + signature embed | **DejaVu Sans** (system font, env override, helv fallback) + **signature/photo crop embedding** with ink guard |
+| JSON export | Structured JSON | **Full schema**: source, confidence, validated, flag, mean_confidence |
+| Pipeline memory | <5.5GB | **~2.5GB** fast path (TrOCR/LLM add 1.5–4GB when toggled on) |
+| Single launch | One command | **`streamlit run src/app.py`** |
+
+### Key Lessons
+1. **UI polish came after the working dashboard** — the app shipped as a functional dashboard first (Day 11-14 core), then critique-priority fixes (P0 region_id regression, UNKNOWN form UX), then the preview/overlay/verified polish. Shipping order matters more than plan order.
+2. **`region_id` is the PDF overlay contract** — any field rebuild that drops it silently breaks export. Locked down with a dataclass-integrity regression test (edits must use `dataclasses.replace` and preserve every attribute).
+3. **PyMuPDF Pixmap constructor changed** — `Pixmap(colorspace, irect, samples, alpha)` no longer exists in 1.28; use `Pixmap(colorspace, width, height, samples, alpha)`. Easy to hit when embedding crops.
+4. **DejaVu Sans is a safe Linux default** — present at `/usr/share/fonts/truetype/dejavu/` on the target 8GB laptop; resolve via `_find_dejavu_font()` with env override and Helvetica fallback.
+5. **The ink-ratio guard transfers** — the same "<1% dark pixels = blank" heuristic that prevents TrOCR garbage also prevents embedding blank signature/photo crops into exports.
+6. **Session state holds the whole result** — storing the preprocessed image in `PipelineResult` costs ~10MB but enables instant overlay rendering and crop embedding without re-running the pipeline.
+7. **Tesseract must be on PATH** — it's bundled in the venv (`venv/bin/tesseract`, tessdata under `venv/share`); dev environments need `PATH` pointed at the venv bin.
 
 ### Deliverables
-- Working Streamlit app with full UI
-- English + Swahili language support
-- PDF and JSON export working
-- Total app memory: <5.5GB
+- ✅ Working Streamlit app with full UI (upload → edit → export)
+- ✅ English + Swahili language support (UI + prompts)
+- ✅ PDF (DejaVu Sans, signature/photo embed) and JSON export working
+- ✅ Total app memory: **~2.5GB fast path** (target: <5.5GB)
 
 ---
 
