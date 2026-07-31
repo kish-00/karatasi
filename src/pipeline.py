@@ -82,6 +82,12 @@ class PipelineResult:
     """Non-empty if the image was auto-rotated (was upside-down)."""
     non_form_warning: str = ""
     """Non-empty if the image may not be a government form."""
+    preprocessed: np.ndarray | None = None
+    """First-page preprocessed image (binarized) in region coordinate space.
+
+    Used for the UI regions overlay and for embedding signature/photo
+    crops in the PDF export. Held in memory only — never persisted.
+    """
 
     @property
     def mean_confidence(self) -> float:
@@ -235,6 +241,7 @@ def process_form(
         blur_warning=blur_warning,
         rotate_warning=rotate_warning,
         non_form_warning=non_form_warning,
+        preprocessed=proc.image,
     )
 
 
