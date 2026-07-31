@@ -74,12 +74,22 @@ def _build(lang: Language) -> SimpleNamespace:
         field_confidence=s("Confidence", "Uhakika"),
         handwritten_label=s("Handwritten", "Imeandikwa kwa mkono"),
         avg_confidence_label=s("Avg Confidence", "Wastani wa Uhakika"),
+        verified_label=s("Verified", "Imehakikiwa"),
         no_fields_message=s(
             "No fields extracted for this form type.",
             "Hakuna sehemu zilizotolewa kwa aina hii ya fomu.",
         ),
         # ── Preview ──
         original_scan=s("Original Scan", "Skana Asili"),
+        regions_header=s("Detected Regions", "Sehemu Zilizotambuliwa"),
+        no_preview_message=s(
+            "Could not render a preview for this file.",
+            "Haiwezi kuonyesha picha ya awali ya faili hii.",
+        ),
+        no_regions_message=s(
+            "No region overlay available.",
+            "Hakuna mwanga wa sehemu.",
+        ),
         # ── Export ──
         export_header=s("Export", "Toa"),
         download_pdf_label=s("Download PDF", "Pakua PDF"),
@@ -194,3 +204,18 @@ def get_form_type_label(form_type: str, language: Language) -> str:
 def get_source_label(source: str, language: Language) -> str:
     """Get a human-readable source label."""
     return _FIELD_SOURCE_LABELS.get(source, {}).get(language, source)
+
+
+_REGION_TYPE_LABELS: dict[str, dict[Language, str]] = {
+    "label": {"English": "Label", "Swahili": "Lebo"},
+    "field": {"English": "Field", "Swahili": "Sehemu"},
+    "checkbox": {"English": "Checkbox", "Swahili": "Kisanduku"},
+    "signature": {"English": "Signature", "Swahili": "Sahihi"},
+    "photo": {"English": "Photo", "Swahili": "Picha"},
+    "unknown": {"English": "Unknown", "Swahili": "Isiyojulikana"},
+}
+
+
+def get_region_type_label(region_type: str, language: Language) -> str:
+    """Get a human-readable label for a layout region type in the given language."""
+    return _REGION_TYPE_LABELS.get(region_type, {}).get(language, region_type)

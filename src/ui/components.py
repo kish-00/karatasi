@@ -7,15 +7,33 @@ supporting English and Swahili display.
 from __future__ import annotations
 
 import dataclasses
+import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 
+import numpy as np
 import streamlit as st
 
 from src.forms.fields import ExtractedField
+from src.ocr.preprocess import BoundingBox
 from src.pipeline import PipelineResult, re_extract_fields
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from src.ui.strings import Strings
+
+
+# ── Region overlay colors (BGR for cv2) ──────────────────────────────
+
+_REGION_COLORS: dict[str, tuple[int, int, int]] = {
+    "label": (46, 125, 50),       # green
+    "field": (21, 101, 192),      # blue
+    "checkbox": (230, 81, 0),     # orange
+    "signature": (106, 27, 154),  # purple
+    "photo": (198, 40, 40),       # red
+    "unknown": (97, 97, 97),      # gray
+}
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -46,6 +64,107 @@ def language_selector() -> str:
         on_change=_change_language,
     )
     return st.session_state.language
+
+
+def _load_preview_bytes(path: str) -> bytes | None:
+    """Render the original upload as PNG bytes for the preview panel.
+
+    PDFs are rendered via their first page; images are encoded directly.
+    Returns None when the file cannot be read.
+    """
+    try:
+        if Path(path).suffix.lower() == ".pdf":
+            import fitz
+
+            doc = fitz.open(path)
+            try:
+                return doc[0].get_pixmap(dpi=150).tobytes("png")
+            finally:
+                doc.close()
+        else:
+            import cv2
+
+            img = cv2.imread(path)
+            if img is None:
+                return None
+            ok, encoded = cv2.imencode(".png", img)
+            return encoded.tobytes() if ok else None
+    except Exception:
+        logger.exception("Failed to load preview for %s", path)
+        return None
+
+
+def _render_regions_overlay(
+    preprocessed: np.ndarray, regions: list[BoundingBox]
+) -> bytes:
+    """Draw color-coded region boxes on the preprocessed image.
+
+    Args:
+        preprocessed: Binarized image in region coordinate space.
+        regions: Layout regions detected on the form.
+
+    Returns:
+        PNG bytes for st.image.
+    """
+    import cv2
+
+    img = cv2.cvtColor(preprocessed, cv2.COLOR_GRAY2RGB)
+    for region in regions:
+        color = _REGION_COLORS.get(region.region_type, _REGION_COLORS["unknown"])
+        cv2.rectangle(
+            img,
+            (region.x, region.y),
+            (region.x + region.w, region.y + region.h),
+            color,
+            2,
+        )
+    ok, encoded = cv2.imencode(".png", img)
+    if not ok:
+        raise ValueError("Failed to encode regions overlay image")
+    return encoded.tobytes()
+
+
+def _regions_legend(s: Strings) -> None:
+    """Render a color legend for the regions overlay."""
+    from src.ui.strings import get_region_type_label
+
+    lang = st.session_state.language
+    spans = []
+    for region_type, (b, g, r) in _REGION_COLORS.items():
+        spans.append(
+            f'<span style="color:rgb({r},{g},{b}); margin-right:12px;">'
+            f"■ {get_region_type_label(region_type, lang)}</span>"
+        )
+    st.markdown(" ".join(spans), unsafe_allow_html=True)
+
+
+@st.fragment
+def display_preview(
+    result: PipelineResult,
+    original_path: str | None,
+    s: Strings,
+) -> None:
+    """Show the original scan and a color-coded regions overlay."""
+    if original_path is None:
+        return
+
+    with st.expander(s.original_scan, expanded=False):
+        preview_bytes = _load_preview_bytes(original_path)
+        if preview_bytes is None:
+            st.info(s.no_preview_message)
+        else:
+            st.image(preview_bytes, use_container_width=True)
+
+    if result.layout and result.layout.regions:
+        with st.expander(s.regions_header, expanded=False):
+            if result.preprocessed is None:
+                st.info(s.no_regions_message)
+            else:
+                overlay = _render_regions_overlay(
+                    result.preprocessed, result.layout.regions
+                )
+                st.image(overlay, use_container_width=True)
+                _regions_legend(s)
 
 
 def render_toggles(s: Strings) -> tuple[bool, bool]:
@@ -117,7 +236,7 @@ def display_fields(result: PipelineResult, s: Strings) -> list[ExtractedField]:
     fields = result.fields
     for i, field in enumerate(fields):
         label = field.label_sw if st.session_state.language == "Swahili" else field.label_en
-        col1, col2, col3 = st.columns([3, 1, 1])
+        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
 
         with col1:
             display_label = f"**{label}**"
@@ -129,22 +248,53 @@ def display_fields(result: PipelineResult, s: Strings) -> list[ExtractedField]:
             _confidence_badge(field.confidence)
 
         with col3:
-            original_key = f"_field_orig_{i}"
             st.text_input(
                 s.value_label,
                 value=field.value,
                 key=f"_field_edit_{i}",
                 label_visibility="collapsed",
             )
-            st.session_state[original_key] = field
 
-    # Collect edited values and rebuild
-    updated_fields: list[ExtractedField] = []
+        with col4:
+            st.checkbox(
+                s.verified_label,
+                value=field.validated,
+                key=f"_field_valid_{i}",
+                label_visibility="collapsed",
+            )
+
+    # Collect edited values and verified flags, then rebuild fields
+    edited_values = {
+        i: st.session_state.get(f"_field_edit_{i}", field.value)
+        for i, field in enumerate(fields)
+    }
+    validated_values = {
+        i: st.session_state.get(f"_field_valid_{i}", field.validated)
+        for i, field in enumerate(fields)
+    }
+    return _rebuild_fields(fields, edited_values, validated_values)
+
+
+def _rebuild_fields(
+    fields: list[ExtractedField],
+    edited_values: dict[int, str],
+    validated_values: dict[int, bool],
+) -> list[ExtractedField]:
+    """Rebuild fields applying user edits and verified flags.
+
+    Every attribute except value/validated is preserved via
+    dataclasses.replace (region_id, confidence, is_handwritten, field_type).
+    """
+    updated: list[ExtractedField] = []
     for i, field in enumerate(fields):
-        edited = st.session_state.get(f"_field_edit_{i}", field.value)
-        updated_fields.append(dataclasses.replace(field, value=edited))
-
-    return updated_fields
+        updated.append(
+            dataclasses.replace(
+                field,
+                value=edited_values.get(i, field.value),
+                validated=validated_values.get(i, field.validated),
+            )
+        )
+    return updated
 
 
 @st.fragment

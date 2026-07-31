@@ -17,6 +17,7 @@ from src.pipeline import PipelineResult, process_form
 from src.ui.components import (
     display_fields,
     display_form_summary,
+    display_preview,
     language_selector,
     render_export_buttons,
     render_form_type_override,
@@ -170,6 +171,9 @@ if result and not result.is_web_portal:
         st.info(f"🔄 {s.rotate_warning_header}: {result.rotate_warning}")
     if result.non_form_warning:
         st.warning(f"❓ {s.non_form_warning_header}: {result.non_form_warning}")
+
+    # Preview + regions overlay
+    display_preview(result, original_path, s)
 
     # Form type override
     render_form_type_override(result, s)
