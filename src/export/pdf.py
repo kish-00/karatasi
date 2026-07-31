@@ -6,11 +6,17 @@ at the positions detected by layout analysis.
 
 from __future__ import annotations
 
+import functools
 import logging
+import os
 import tempfile
 from pathlib import Path
-import fitz
 
+import fitz
+import numpy as np
+
+from src.forms.fields import FieldType
+from src.ocr.preprocess import BoundingBox
 from src.pipeline import PipelineResult
 
 logger = logging.getLogger(__name__)
@@ -21,6 +27,41 @@ _OVERLAY_COLOR = (0, 0, 0.6)  # Dark blue — visible against originals
 _FONT_SIZE_MIN = 8
 _FONT_SIZE_MAX = 14
 _PADDING = 2  # px inside field bounding box
+_OVERLAY_FONT_NAME = "dejavu"
+
+# ── Font resolution ──────────────────────────────────────────────────
+
+_FONT_CANDIDATES = (
+    os.environ.get("KARATASI_DEJAVU_FONT", ""),
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+    "/usr/local/share/fonts/dejavu/DejaVuSans.ttf",
+    str(Path.home() / ".fonts" / "DejaVuSans.ttf"),
+)
+
+
+@functools.lru_cache(maxsize=1)
+def _find_dejavu_font() -> str | None:
+    """Locate a DejaVu Sans TTF for Unicode-safe text overlay."""
+    for candidate in _FONT_CANDIDATES:
+        if candidate and Path(candidate).is_file():
+            return candidate
+    return None
+
+
+@functools.lru_cache(maxsize=1)
+def _get_overlay_font() -> tuple[fitz.Font | None, str | None]:
+    """Return (font, fontfile) preferring DejaVu Sans, falling back to Helvetica."""
+    font_path = _find_dejavu_font()
+    if font_path:
+        try:
+            return fitz.Font(fontfile=font_path), font_path
+        except Exception:
+            logger.warning("Failed to load DejaVu font from %s", font_path)
+    try:
+        return fitz.Font("helv"), None
+    except Exception:
+        return None, None
 
 
 def export_pdf(
@@ -144,11 +185,9 @@ def _apply_overlays(
 
     # Get field regions (field-type regions from layout detection)
     field_regions = [r for r in result.layout.regions if r.region_type == "field"]
+    overlay_font, overlay_fontfile = _get_overlay_font()
 
     for field in result.fields:
-        if not field.value.strip() or field.confidence < 0.01:
-            continue  # Skip empty or zero-confidence fields
-
         if field.region_id is None or field.region_id >= len(field_regions):
             logger.debug("No layout region for field %s (region_id=%s)", field.key, field.region_id)
             continue
@@ -167,16 +206,67 @@ def _apply_overlays(
         if field_rect.is_empty or field_rect.width < 1 or field_rect.height < 1:
             continue
 
+        # Signature/photo fields: embed the region crop as an image
+        if field.field_type in (FieldType.SIGNATURE, FieldType.PHOTO):
+            if _embed_region_crop(page, field_rect, region, result.preprocessed):
+                continue
+
+        if not field.value.strip() or field.confidence < 0.01:
+            continue  # Skip empty or zero-confidence fields
+
         # Choose font size based on available height
         font_size = min(_FONT_SIZE_MAX, field_rect.height * 0.7)
         font_size = max(_FONT_SIZE_MIN, font_size)
 
-        try:
-            font = fitz.Font("helv")
-        except Exception:
-            font = None
+        _draw_text(page, field_rect, field.value, font_size,
+                   overlay_font, overlay_fontfile)
 
-        _draw_text(page, field_rect, field.value, font_size, font)
+
+def _embed_region_crop(
+    page: fitz.Page,
+    rect: fitz.Rect,
+    region: BoundingBox,
+    preprocessed: np.ndarray | None,
+) -> bool:
+    """Embed the region crop from the preprocessed image into the PDF.
+
+    Used for signature/photo fields so their visual content survives
+    into the export. Skips nearly blank regions (no ink present).
+
+    Returns:
+        True if an image was inserted into the page.
+    """
+    if preprocessed is None:
+        return False
+
+    h, w = preprocessed.shape[:2]
+    x0, y0 = region.x, region.y
+    x1, y1 = region.x + region.w, region.y + region.h
+    if x0 < 0 or y0 < 0 or x1 > w or y1 > h or x1 <= x0 or y1 <= y0:
+        return False
+
+    crop = preprocessed[y0:y1, x0:x1]
+    if crop.size == 0:
+        return False
+
+    # Ink-ratio guard: skip blank regions (same heuristic as the TrOCR path)
+    if float(np.sum(crop < 200)) / crop.size < 0.01:
+        return False
+
+    try:
+        samples = np.ascontiguousarray(crop)
+        pixmap = fitz.Pixmap(
+            fitz.csGRAY,
+            samples.shape[1],
+            samples.shape[0],
+            samples.tobytes(),
+            False,
+        )
+        page.insert_image(rect, pixmap=pixmap)
+        return True
+    except Exception:
+        logger.exception("Failed to embed region crop for %s", region)
+        return False
 
 
 def _draw_text(
@@ -185,10 +275,12 @@ def _draw_text(
     text: str,
     font_size: float,
     font: fitz.Font | None,
+    fontfile: str | None = None,
 ) -> None:
     """Draw text inside a rectangle with clipping.
 
     If the text is wider than the rectangle, reduce font size iteratively.
+    Uses DejaVu Sans when available (fontfile), otherwise built-in Helvetica.
     """
     # Try reducing font size until text fits
     for attempt in range(3):
@@ -201,8 +293,8 @@ def _draw_text(
         page.insert_text(
             point=(rect.x0, rect.y0 + font_size),
             text=text,
-            fontname="helv" if font is None else None,
-            fontfile=None,
+            fontname=_OVERLAY_FONT_NAME if fontfile else ("helv" if font is None else None),
+            fontfile=fontfile,
             fontsize=font_size,
             color=_OVERLAY_COLOR,
         )
