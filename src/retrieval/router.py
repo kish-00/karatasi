@@ -75,6 +75,12 @@ MONTHS: dict[str, int] = {
 
 CODE_RE = re.compile(r"\b([A-Z]{2,3}-\d{4}-\d{3,4})\b", re.IGNORECASE)
 
+_MONTH_END = {1: 31, 2: 29, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
+
+
+def _month_end(month: int) -> str:
+    return f"{month:02d}-{_MONTH_END[month]:02d}"
+
 
 def extract_supplier(q: str) -> str | None:
     ql = q.lower()
@@ -92,7 +98,7 @@ def extract_period(q: str) -> tuple[str, str] | None:
     quarter = re.search(r"\bq([1-4])\b", ql)
     if quarter:
         qn = int(quarter.group(1))
-        return (f"{year}-{3*qn-2:02d}-01", f"{year}-{3*qn:02d}-31")
+        return (f"{year}-{3*qn-2:02d}-01", f"{year}-{_month_end(3*qn)}")
 
     if re.search(r"premier trimestre|first quarter", ql):
         return ("2024-01-01", "2024-03-31")
@@ -104,10 +110,10 @@ def extract_period(q: str) -> tuple[str, str] | None:
     months = [m for m in MONTHS if m in ql]
     if len(months) >= 2:
         m1, m2 = (MONTHS[months[0]], MONTHS[months[1]])
-        return (f"{year}-{m1:02d}-01", f"{year}-{m2:02d}-31")
+        return (f"{year}-{m1:02d}-01", f"{year}-{_month_end(m2)}")
     if len(months) == 1:
         m = MONTHS[months[0]]
-        return (f"{year}-{m:02d}-01", f"{year}-{m:02d}-31")
+        return (f"{year}-{m:02d}-01", f"{year}-{_month_end(m)}")
     if re.search(r"\b2024\b", ql):
         return ("2024-01-01", "2024-12-31")
     return None

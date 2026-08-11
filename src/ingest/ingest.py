@@ -202,6 +202,16 @@ def ingest_manifest(
     store = FinanceStore(db_path)
     if not force and store.count_documents() > 0:
         logger.warning("DB already has %d docs (use --force to rebuild)", store.count_documents())
+        counts = dict(
+            documents=store.count_documents(),
+            invoices=store.run_sql("SELECT COUNT(*) AS n FROM invoices")[0]["n"],
+            receipts=store.run_sql("SELECT COUNT(*) AS n FROM receipts")[0]["n"],
+            contracts=store.run_sql("SELECT COUNT(*) AS n FROM contracts")[0]["n"],
+            statements=store.run_sql("SELECT COUNT(*) AS n FROM statements")[0]["n"],
+            chunks=store.run_sql("SELECT COUNT(*) AS n FROM chunks")[0]["n"],
+        )
+        store.close()
+        return counts
     if force:
         store.delete_all()
 

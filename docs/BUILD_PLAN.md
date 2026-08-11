@@ -15,7 +15,7 @@
 | Pivot to offline RAG QA — generator, ingest, store, router | Week 3 | ✅ Complete |
 | Gold-QA eval harness (50 questions) | Week 3 | ✅ Complete — **PASS 50/50** |
 | Semantic answers (retriever + context + LLM) | Week 3 | ✅ Complete |
-| Tests rewrite for the RAG stack | Week 4 | ⏳ In progress |
+| Tests rewrite for the RAG stack (generator/ingest/router/eval) | Week 4 | ✅ Complete — **32 passed** |
 | Optional ask-a-question UI | Week 4 | ⏳ Optional |
 | Docs/README final pass, demo, submission | Week 4 (Aug 19–25) | ⏳ In progress |
 
@@ -53,11 +53,19 @@ The original Karatasi direction, built and then replaced:
 
 ## Week 4 — Remaining Work (Aug 19–25)
 
-1. **Rewrite tests for the RAG stack** — the existing `tests/` (`test_extracted_field.py`, `test_pdf_export.py`, `test_ui_features.py`) import deleted Karatasi modules and fail collection (`ModuleNotFoundError: No module named 'src.forms'`). Replace with: generator consistency (manifest ↔ gold_qa ↔ documents), ingest idempotency (re-run without `--force`), router per-category accuracy, eval harness.
-2. **Optional: ask-a-question UI** — `streamlit` is still in requirements; a minimal chat-over-corpus screen using `QueryRouter.answer()` would make the demo tangible. Not required for the 50/50 eval.
-3. **Final docs/README pass** — already rewritten with this pivot; verify against whatever ships in Week 4.
-4. **Legacy cleanup (optional)** — `chromadb` and `streamlit` are unused in `requirements.txt`; `src/ocr/preprocess.py` + `src/ocr/typed.py` are legacy (not in the RAG answer path). Leave unless trimming.
-5. **Demo + submission** — demo video + submission before the Aug 24–25 deadline.
+1. ✅ **Rewrite tests for the RAG stack** — DONE. The legacy `tests/` (`test_extracted_field.py`, `test_pdf_export.py`, `test_ui_features.py`) imported deleted Karatasi modules and failed collection; deleted. Replaced with:
+   - `tests/test_generator.py` — manifest ↔ gold_qa ↔ documents consistency (meta counts, unique files on disk, invoice math, statement closing = entries sum, gold shape 50/5-category/46-sql-4-semantic, gold files/sources exist, generator regeneration parity).
+   - `tests/test_ingest.py` — ingest idempotency (re-run without `--force` is a no-op), clean rebuild with `--force`, chunking invariants (≤500 chars, line-preserving, global chunk_idx).
+   - `tests/test_router.py` — per-category SQL accuracy against gold (46 sql questions), router pure helpers (supplier/period/code extraction, formatting).
+   - `tests/test_eval.py` — eval harness `normalize()`, 50/50 on the real DB, source files carried.
+   - **32 tests pass** (`venv/bin/python -m pytest tests/`); eval suite still **PASS 50/50 FAIL_IDS=[]**.
+2. **Bugs found & fixed while writing tests**:
+   - `src/ingest/ingest.py`: docs claimed ingest "aborts if DB populated and --force not passed" but code only warned and re-ran — duplicating chunk rows. `ingest_manifest` now returns existing counts as a no-op when populated and `force=False`.
+   - `src/retrieval/router.py`: `extract_period` produced invalid dates (`2024-06-31` for Q2 — June has 30 days). Added `_month_end` month-end mapping; eval result set unchanged (real dates never exceed month end).
+3. **Optional: ask-a-question UI** — `streamlit` is still in requirements; a minimal chat-over-corpus screen using `QueryRouter.answer()` would make the demo tangible. Not required for the 50/50 eval.
+4. **Final docs/README pass** — already rewritten with this pivot; verify against whatever ships in Week 4.
+5. **Legacy cleanup (optional)** — `chromadb` and `streamlit` are unused in `requirements.txt`; `src/ocr/preprocess.py` + `src/ocr/typed.py` are legacy (not in the RAG answer path). Leave unless trimming.
+6. **Demo + submission** — demo video + submission before the Aug 24–25 deadline.
 
 ## Session Environment Notes (critical — replaces deleted CONTINUATION_PROMPT.md)
 
@@ -71,6 +79,7 @@ These quirks are specific to the development environment and bite every session:
 ## Verified Current State (trust, do not re-verify)
 
 - **Gold-QA eval: PASS 50/50, FAIL_IDS=[]** — `venv/bin/python eval/run_eval.py` exits 0.
+- **Test suite: 32 passed** — `venv/bin/python -m pytest tests/` (generator/ingest/router/eval; the eval tests load the Qwen LLM, ~3 min).
 - Router: 12 intent handlers → deterministic SQL for 46 questions; semantic RAG fallback (`src/rag/`) for the 4 lease/summarize questions. Diagnostics clean.
 - Semantic path is BUILT and wired: `src/rag/retriever.py` (lease-keyword route + kNN k=8), `src/rag/context.py` (4000-char cap), `src/rag/answers.py` (Qwen2.5-1.5B, ≤3 sentences, `clean_answer`), `answer_semantic()` in `src/rag/__init__.py`, called by `QueryRouter._semantic`.
 - Data consistency: manifest has 60 docs (34 invoices, 14 receipts, 6 contracts, 6 statements — all unique files); DB = 60 documents / 82 chunks; `data/synthetic/generator.py` regenerates manifest + gold_qa cleanly WITHOUT `--force`.
@@ -82,6 +91,7 @@ These quirks are specific to the development environment and bite every session:
 ```bash
 venv/bin/python data/synthetic/generator.py   # regenerate corpus (no --force needed)
 venv/bin/python -m src.ingest --force          # rebuild data/smebrief.db from manifest
+venv/bin/python -m pytest tests/               # expect 32 passed (eval tests ~3 min, load LLM)
 venv/bin/python eval/run_eval.py               # expect PASS 50/50 FAIL_IDS=[] (exit 0)
 venv/bin/python -c "from src.storage.store import get_store; from src.retrieval.router import QueryRouter; a=QueryRouter(get_store()).answer('Combien de factures sont impayées ?'); print(a.text, a.files, a.route)"
 ```
