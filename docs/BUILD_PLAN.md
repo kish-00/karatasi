@@ -66,7 +66,7 @@ The original Karatasi direction, built and then replaced:
    - `src/storage/db.py`: `sqlite3.connect()` defaulted to `check_same_thread=True` while `get_store()` is a process-wide singleton — the Streamlit app (and its AppTest runs, each in a fresh thread) reused a connection created in another thread and raised "SQLite objects created in a thread can only be used in that same thread". `connect()` now passes `check_same_thread=False`; `FinanceStore` already serializes all access with `self._lock`, so this is safe.
 3. ✅ **Optional: ask-a-question UI** — DONE. `src/ui/app.py`: Streamlit chat over the corpus using `QueryRouter.answer()`. Bilingual suggested questions, form + suggestion chips, route/value/source display, chat history with a clear button, error handling. Verified headlessly via Streamlit's `AppTest` (SQL + semantic questions render history without exceptions). Run with `venv/bin/streamlit run src/ui/app.py`.
 4. **Final docs/README pass** — already rewritten with this pivot; verify against whatever ships in Week 4.
-5. **Legacy cleanup (optional)** — `chromadb` and `streamlit` are unused in `requirements.txt`; `src/ocr/preprocess.py` + `src/ocr/typed.py` are legacy (not in the RAG answer path). Leave unless trimming.
+5. **Legacy cleanup (optional)** — `chromadb` is unused in `requirements.txt` (streamlit is now used by the UI); `src/ocr/preprocess.py` + `src/ocr/typed.py` are legacy (not in the RAG answer path). Leave unless trimming.
 6. **Demo + submission** — demo video + submission before the Aug 24–25 deadline.
 
 ## Session Environment Notes (critical — replaces deleted CONTINUATION_PROMPT.md)
