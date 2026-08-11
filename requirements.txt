@@ -1,39 +1,33 @@
-# Karatasi — Offline AI Document Processor
+# SME Brief — Offline Local RAG for African SMEs
 # Africa Deep Tech Challenge 2026
 
-# Image Processing
+# Image Processing + OCR
 opencv-python-headless>=4.9.0
 Pillow>=10.3.0
 numpy>=1.26.0
-
-# OCR
 pytesseract>=0.3.10
 
-# Handwriting OCR
+# Embeddings (multilingual-e5-small)
+sentence-transformers>=2.7.0
 torch>=2.2.0
-torchvision>=0.17.0
-transformers>=4.40.0
-sentencepiece>=0.2.0
-protobuf>=5.26.0
+
+# Vector store
+chromadb>=0.5.0
 
 # LLM (CPU-optimized inference)
 llama-cpp-python>=0.2.0
 
-# Vector Store
-faiss-cpu>=1.8.0
-sentence-transformers>=2.7.0
-
 # UI
 streamlit>=1.35.0
+python-multipart>=0.0.9
 
-# PDF Export
+# PDF parsing + generation
 PyMuPDF>=1.24.0
-reportlab>=4.1.0
 
 # Utilities
 pydantic>=2.7.0
-python-multipart>=0.0.9
+langdetect>=1.0.9
+psutil>=5.9.0
 
 # Development
 pytest>=8.0.0
-memory_profiler>=0.61.0

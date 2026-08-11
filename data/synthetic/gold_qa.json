@@ -1,0 +1,954 @@
+[
+  {
+    "id": "num_01",
+    "category": "numeric_extraction",
+    "question": "How much was invoice AT-2024-0007?",
+    "lang": "en",
+    "gold_answer": "8,120.00 USD",
+    "gold_values": [
+      {
+        "currency": "USD",
+        "value": 8120.0
+      }
+    ],
+    "gold_source": "invoice_AT-2024-0007.pdf",
+    "gold_files": [
+      "invoice_AT-2024-0007.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "num_02",
+    "category": "numeric_extraction",
+    "question": "Quel est le montant total de la facture GCD-2024-014 ?",
+    "lang": "fr",
+    "gold_answer": "1 239 000 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 1239000.0
+      }
+    ],
+    "gold_source": "facture_GCD-2024-014.pdf",
+    "gold_files": [
+      "facture_GCD-2024-014.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "num_03",
+    "category": "numeric_extraction",
+    "question": "What is the total of invoice WH-2024-004?",
+    "lang": "en",
+    "gold_answer": "5,829.00 USD",
+    "gold_values": [
+      {
+        "currency": "USD",
+        "value": 5829.0
+      }
+    ],
+    "gold_source": "invoice_WH-2024-004.pdf",
+    "gold_files": [
+      "invoice_WH-2024-004.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "num_04",
+    "category": "numeric_extraction",
+    "question": "Quel est le montant de la facture SX-2024-011 ?",
+    "lang": "fr",
+    "gold_answer": "377 600 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 377600.0
+      }
+    ],
+    "gold_source": "facture_SX-2024-011.pdf",
+    "gold_files": [
+      "facture_SX-2024-011.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "num_05",
+    "category": "numeric_extraction",
+    "question": "How much was invoice IF-2024-029?",
+    "lang": "en",
+    "gold_answer": "5,481.00 USD",
+    "gold_values": [
+      {
+        "currency": "USD",
+        "value": 5481.0
+      }
+    ],
+    "gold_source": "invoice_IF-2024-029.pdf",
+    "gold_files": [
+      "invoice_IF-2024-029.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "num_06",
+    "category": "numeric_extraction",
+    "question": "Quel est le montant du reçu RCP-2024-031 ?",
+    "lang": "fr",
+    "gold_answer": "240 000 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 240000
+      }
+    ],
+    "gold_source": "recu_RCP-2024-031.pdf",
+    "gold_files": [
+      "recu_RCP-2024-031.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "num_07",
+    "category": "numeric_extraction",
+    "question": "What is the amount of receipt RCP-2024-015?",
+    "lang": "en",
+    "gold_answer": "110 000 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 110000
+      }
+    ],
+    "gold_source": "receipt_RCP-2024-015.pdf",
+    "gold_files": [
+      "receipt_RCP-2024-015.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "num_08",
+    "category": "numeric_extraction",
+    "question": "Combien coûte la facture CF-2024-009 ?",
+    "lang": "fr",
+    "gold_answer": "256 060 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 256060.0
+      }
+    ],
+    "gold_source": "facture_CF-2024-009.pdf",
+    "gold_files": [
+      "facture_CF-2024-009.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "num_09",
+    "category": "numeric_extraction",
+    "question": "What is the total amount of invoice AT-2024-0060?",
+    "lang": "en",
+    "gold_answer": "7,192.00 USD",
+    "gold_values": [
+      {
+        "currency": "USD",
+        "value": 7192.0
+      }
+    ],
+    "gold_source": "invoice_AT-2024-0060.pdf",
+    "gold_files": [
+      "invoice_AT-2024-0060.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "num_10",
+    "category": "numeric_extraction",
+    "question": "Quel est le montant de la facture GCD-2024-046 ?",
+    "lang": "fr",
+    "gold_answer": "1 220 120 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 1220120.0
+      }
+    ],
+    "gold_source": "facture_GCD-2024-046.pdf",
+    "gold_files": [
+      "facture_GCD-2024-046.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "tmp_01",
+    "category": "temporal",
+    "question": "What did we pay AfricaTextiles Ltd between January and March 2024?",
+    "lang": "en",
+    "gold_answer": "31,900.00 USD (invoices invoice_AT-2024-0007, invoice_AT-2024-0012, invoice_AT-2024-0019)",
+    "gold_values": [
+      {
+        "currency": "USD",
+        "value": 31900.0
+      }
+    ],
+    "gold_source": "invoice_AT-2024-0007.pdf",
+    "gold_files": [
+      "invoice_AT-2024-0007.pdf",
+      "invoice_AT-2024-0012.pdf",
+      "invoice_AT-2024-0019.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "tmp_02",
+    "category": "temporal",
+    "question": "Which AfricaTextiles invoices were issued in Q1 2024?",
+    "lang": "en",
+    "gold_answer": "invoice_AT-2024-0007, invoice_AT-2024-0012, invoice_AT-2024-0019, invoice_AT-2024-0027",
+    "gold_values": [],
+    "gold_source": "invoice_AT-2024-0007.pdf",
+    "gold_files": [
+      "invoice_AT-2024-0007.pdf",
+      "invoice_AT-2024-0012.pdf",
+      "invoice_AT-2024-0019.pdf",
+      "invoice_AT-2024-0027.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "tmp_03",
+    "category": "temporal",
+    "question": "How much did we pay Groupe Comptoir de Dakar in Q2 2024?",
+    "lang": "en",
+    "gold_answer": "1 033 680 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 1033680.0
+      }
+    ],
+    "gold_source": "facture_GCD-2024-021.pdf",
+    "gold_files": [
+      "facture_GCD-2024-021.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "tmp_04",
+    "category": "temporal",
+    "question": "What did we pay SENEXPORT SA between January and March 2024?",
+    "lang": "en",
+    "gold_answer": "1 198 880 FCFA (invoices SX-2024-003, SX-2024-011)",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 1198880
+      }
+    ],
+    "gold_source": "facture_SX-2024-003.pdf",
+    "gold_files": [
+      "facture_SX-2024-003.pdf",
+      "facture_SX-2024-011.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "tmp_05",
+    "category": "temporal",
+    "question": "List the receipts from March 2024.",
+    "lang": "en",
+    "gold_answer": "RCP-2024-011 (125 000 FCFA)",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 125000
+      }
+    ],
+    "gold_source": "recu_RCP-2024-011.pdf",
+    "gold_files": [
+      "recu_RCP-2024-011.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "tmp_06",
+    "category": "temporal",
+    "question": "Which invoices were issued between July and September 2024?",
+    "lang": "en",
+    "gold_answer": "invoice_AF-2024-006, facture_GCD-2024-030, facture_GCD-2024-038, invoice_IF-2024-016, invoice_LTM-2024-011, facture_SX-2024-026, facture_TP-2024-020, invoice_WH-2024-013",
+    "gold_values": [],
+    "gold_source": "invoice_AF-2024-006.png",
+    "gold_files": [
+      "invoice_AF-2024-006.png",
+      "facture_GCD-2024-030.pdf",
+      "facture_GCD-2024-038.pdf",
+      "invoice_IF-2024-016.pdf",
+      "invoice_LTM-2024-011.png",
+      "facture_SX-2024-026.pdf",
+      "facture_TP-2024-020.png",
+      "invoice_WH-2024-013.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "tmp_07",
+    "category": "temporal",
+    "question": "Which invoices were issued in June 2024?",
+    "lang": "en",
+    "gold_answer": "facture_ACM-2024-007, invoice_AT-2024-0041, facture_CF-2024-017",
+    "gold_values": [],
+    "gold_source": "facture_ACM-2024-007.png",
+    "gold_files": [
+      "facture_ACM-2024-007.png",
+      "invoice_AT-2024-0041.pdf",
+      "facture_CF-2024-017.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "tmp_08",
+    "category": "temporal",
+    "question": "What did we pay IndoFab Textiles in Q2 2024?",
+    "lang": "en",
+    "gold_answer": "6,380.00 USD (invoice IF-2024-005)",
+    "gold_values": [
+      {
+        "currency": "USD",
+        "value": 6380.0
+      }
+    ],
+    "gold_source": "invoice_IF-2024-005.pdf",
+    "gold_files": [
+      "invoice_IF-2024-005.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "tmp_09",
+    "category": "temporal",
+    "question": "Quelles factures Groupe Comptoir ont été émises au premier trimestre 2024 ?",
+    "lang": "fr",
+    "gold_answer": "GCD-2024-001, GCD-2024-008, GCD-2024-014",
+    "gold_values": [],
+    "gold_source": "facture_GCD-2024-001.pdf",
+    "gold_files": [
+      "facture_GCD-2024-001.pdf",
+      "facture_GCD-2024-008.pdf",
+      "facture_GCD-2024-014.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "tmp_10",
+    "category": "temporal",
+    "question": "What was the closing balance on the AfricaTextiles Q1 2024 statement?",
+    "lang": "en",
+    "gold_answer": "5,916.00 USD",
+    "gold_values": [
+      {
+        "currency": "USD",
+        "value": 5916.0
+      }
+    ],
+    "gold_source": "releve_africatextiles_q12024.pdf",
+    "gold_files": [
+      "releve_africatextiles_q12024.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "agg_01",
+    "category": "aggregation",
+    "question": "What is our total VAT paid in Q1 2024?",
+    "lang": "en",
+    "gold_answer": "836 100 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 836100.0
+      }
+    ],
+    "gold_source": "facture_CF-2024-002.pdf",
+    "gold_files": [
+      "facture_CF-2024-002.pdf",
+      "facture_CF-2024-009.pdf",
+      "facture_GCD-2024-001.pdf",
+      "facture_GCD-2024-008.pdf",
+      "facture_GCD-2024-014.pdf",
+      "facture_SX-2024-003.pdf",
+      "facture_SX-2024-011.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "agg_02",
+    "category": "aggregation",
+    "question": "What is the total amount of all unpaid invoices?",
+    "lang": "en",
+    "gold_answer": "4 605 540 FCFA + 12,673.00 USD",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 4605540.0
+      },
+      {
+        "currency": "USD",
+        "value": 12673.0
+      }
+    ],
+    "gold_source": "invoice_AT-2024-0060.pdf",
+    "gold_files": [
+      "invoice_AT-2024-0060.pdf",
+      "facture_CF-2024-017.pdf",
+      "facture_CF-2024-024.pdf",
+      "facture_GCD-2024-030.pdf",
+      "facture_GCD-2024-046.pdf",
+      "invoice_IF-2024-029.pdf",
+      "facture_SX-2024-026.pdf",
+      "facture_SX-2024-035.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "agg_03",
+    "category": "aggregation",
+    "question": "How many receipts are over 100,000 FCFA?",
+    "lang": "en",
+    "gold_answer": "4",
+    "gold_values": [
+      {
+        "currency": "count",
+        "value": 4
+      }
+    ],
+    "gold_source": "recu_RCP-2024-011.pdf",
+    "gold_files": [
+      "recu_RCP-2024-011.pdf",
+      "receipt_RCP-2024-015.pdf",
+      "recu_RCP-2024-023.pdf",
+      "recu_RCP-2024-031.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "agg_04",
+    "category": "aggregation",
+    "question": "What is the total amount of receipts over 100,000 FCFA?",
+    "lang": "en",
+    "gold_answer": "625 000 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 625000
+      }
+    ],
+    "gold_source": "recu_RCP-2024-011.pdf",
+    "gold_files": [
+      "recu_RCP-2024-011.pdf",
+      "receipt_RCP-2024-015.pdf",
+      "recu_RCP-2024-023.pdf",
+      "recu_RCP-2024-031.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "agg_05",
+    "category": "aggregation",
+    "question": "What is the total of all invoices from Groupe Comptoir de Dakar in 2024?",
+    "lang": "en",
+    "gold_answer": "7 625 750 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 7625750.0
+      }
+    ],
+    "gold_source": "facture_GCD-2024-001.pdf",
+    "gold_files": [
+      "facture_GCD-2024-001.pdf",
+      "facture_GCD-2024-008.pdf",
+      "facture_GCD-2024-014.pdf",
+      "facture_GCD-2024-021.pdf",
+      "facture_GCD-2024-030.pdf",
+      "facture_GCD-2024-038.pdf",
+      "facture_GCD-2024-046.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "agg_06",
+    "category": "aggregation",
+    "question": "What is our total spend with AfricaTextiles in 2024?",
+    "lang": "en",
+    "gold_answer": "60,204.00 USD",
+    "gold_values": [
+      {
+        "currency": "USD",
+        "value": 60204.0
+      }
+    ],
+    "gold_source": "invoice_AT-2024-0007.pdf",
+    "gold_files": [
+      "invoice_AT-2024-0007.pdf",
+      "invoice_AT-2024-0012.pdf",
+      "invoice_AT-2024-0019.pdf",
+      "invoice_AT-2024-0027.pdf",
+      "invoice_AT-2024-0041.pdf",
+      "invoice_AT-2024-0060.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "agg_07",
+    "category": "aggregation",
+    "question": "Combien de reçus dépassent 100 000 FCFA ?",
+    "lang": "fr",
+    "gold_answer": "4",
+    "gold_values": [
+      {
+        "currency": "count",
+        "value": 4
+      }
+    ],
+    "gold_source": "recu_RCP-2024-011.pdf",
+    "gold_files": [
+      "recu_RCP-2024-011.pdf",
+      "receipt_RCP-2024-015.pdf",
+      "recu_RCP-2024-023.pdf",
+      "recu_RCP-2024-031.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "agg_08",
+    "category": "aggregation",
+    "question": "What is the total amount of unpaid invoices in FCFA?",
+    "lang": "en",
+    "gold_answer": "4 605 540 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 4605540.0
+      }
+    ],
+    "gold_source": "invoice_AT-2024-0060.pdf",
+    "gold_files": [
+      "invoice_AT-2024-0060.pdf",
+      "facture_CF-2024-017.pdf",
+      "facture_CF-2024-024.pdf",
+      "facture_GCD-2024-030.pdf",
+      "facture_GCD-2024-046.pdf",
+      "invoice_IF-2024-029.pdf",
+      "facture_SX-2024-026.pdf",
+      "facture_SX-2024-035.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "agg_09",
+    "category": "aggregation",
+    "question": "What is the total value of all invoices issued in Q3 2024?",
+    "lang": "en",
+    "gold_answer": "2 952 950 FCFA + 14,012.80 USD",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 2952950.0
+      },
+      {
+        "currency": "USD",
+        "value": 14012.8
+      }
+    ],
+    "gold_source": "invoice_AF-2024-006.png",
+    "gold_files": [
+      "invoice_AF-2024-006.png",
+      "facture_GCD-2024-030.pdf",
+      "facture_GCD-2024-038.pdf",
+      "invoice_IF-2024-016.pdf",
+      "invoice_LTM-2024-011.png",
+      "facture_SX-2024-026.pdf",
+      "facture_TP-2024-020.png",
+      "invoice_WH-2024-013.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "agg_10",
+    "category": "aggregation",
+    "question": "What is the total of all receipts in 2024?",
+    "lang": "en",
+    "gold_answer": "1 363 000 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 1363000
+      }
+    ],
+    "gold_source": "recu_RCP-2024-002.pdf",
+    "gold_files": [
+      "recu_RCP-2024-002.pdf",
+      "recu_RCP-2024-006.pdf",
+      "recu_RCP-2024-011.pdf",
+      "receipt_RCP-2024-015.pdf",
+      "recu_RCP-2024-019.pdf",
+      "recu_RCP-2024-023.pdf",
+      "receipt_RCP-2024-026.pdf",
+      "recu_RCP-2024-031.pdf",
+      "receipt_RCP-2024-033.pdf",
+      "recu_RCP-2024-037.pdf",
+      "recu_RCP-2024-040.png",
+      "recu_RCP-2024-044.png",
+      "recu_RCP-2024-048.png",
+      "receipt_RCP-2024-050.png"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "con_01",
+    "category": "contract",
+    "question": "What is the monthly rent in the warehouse lease?",
+    "lang": "en",
+    "gold_answer": "850 000 FCFA per month",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 850000
+      }
+    ],
+    "gold_source": "contrat_bail_entrepot.pdf",
+    "gold_files": [
+      "contrat_bail_entrepot.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "con_02",
+    "category": "contract",
+    "question": "What is the late payment penalty in the SENEXPORT supply agreement?",
+    "lang": "en",
+    "gold_answer": "2% per month",
+    "gold_values": [
+      {
+        "currency": "pct",
+        "value": 2.0
+      }
+    ],
+    "gold_source": "contrat_appro_senexport.pdf",
+    "gold_files": [
+      "contrat_appro_senexport.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "con_03",
+    "category": "contract",
+    "question": "How many months is the warehouse lease term?",
+    "lang": "en",
+    "gold_answer": "36 months",
+    "gold_values": [
+      {
+        "currency": "count",
+        "value": 36
+      }
+    ],
+    "gold_source": "contrat_bail_entrepot.pdf",
+    "gold_files": [
+      "contrat_bail_entrepot.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "con_04",
+    "category": "contract",
+    "question": "What is the credit line amount in the bank agreement?",
+    "lang": "en",
+    "gold_answer": "5 000 000 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 5000000
+      }
+    ],
+    "gold_source": "convention_credit_bancaire.pdf",
+    "gold_files": [
+      "convention_credit_bancaire.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "con_05",
+    "category": "contract",
+    "question": "What deposit is required for the warehouse lease?",
+    "lang": "en",
+    "gold_answer": "2 months of rent",
+    "gold_values": [
+      {
+        "currency": "months",
+        "value": 2
+      }
+    ],
+    "gold_source": "contrat_bail_entrepot.pdf",
+    "gold_files": [
+      "contrat_bail_entrepot.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "con_06",
+    "category": "contract",
+    "question": "What are the payment terms in the AfricaTextiles supply agreement?",
+    "lang": "en",
+    "gold_answer": "Net 30 days from the date of each invoice",
+    "gold_values": [
+      {
+        "currency": "days",
+        "value": 30
+      }
+    ],
+    "gold_source": "supply_agreement_africatextiles.pdf",
+    "gold_files": [
+      "supply_agreement_africatextiles.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "con_07",
+    "category": "contract",
+    "question": "Quelle est la pénalité de retard dans le contrat SENEXPORT ?",
+    "lang": "fr",
+    "gold_answer": "2% par mois",
+    "gold_values": [
+      {
+        "currency": "pct",
+        "value": 2.0
+      }
+    ],
+    "gold_source": "contrat_appro_senexport.pdf",
+    "gold_files": [
+      "contrat_appro_senexport.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "con_08",
+    "category": "contract",
+    "question": "Summarize the payment terms in the warehouse lease.",
+    "lang": "en",
+    "gold_answer": "Rent of 850 000 FCFA per month, payable by the 5th of each month; a 5% per month penalty applies to late payments; a 2-month deposit is required.",
+    "gold_values": [],
+    "gold_source": "contrat_bail_entrepot.pdf",
+    "gold_files": [
+      "contrat_bail_entrepot.pdf"
+    ],
+    "sql_path": "semantic"
+  },
+  {
+    "id": "con_09",
+    "category": "contract",
+    "question": "What is the interest rate on the bank credit line?",
+    "lang": "en",
+    "gold_answer": "9% per year",
+    "gold_values": [
+      {
+        "currency": "pct",
+        "value": 9.0
+      }
+    ],
+    "gold_source": "convention_credit_bancaire.pdf",
+    "gold_files": [
+      "convention_credit_bancaire.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "con_10",
+    "category": "contract",
+    "question": "Quelles sont les conditions de paiement du bail de l'entrepôt ?",
+    "lang": "fr",
+    "gold_answer": "Loyer de 850 000 FCFA par mois payable le 5 de chaque mois, pénalité de retard de 5% par mois, dépôt de garantie de 2 mois.",
+    "gold_values": [],
+    "gold_source": "contrat_bail_entrepot.pdf",
+    "gold_files": [
+      "contrat_bail_entrepot.pdf"
+    ],
+    "sql_path": "semantic"
+  },
+  {
+    "id": "mul_01",
+    "category": "multilingual",
+    "question": "Quelles factures sont encore impayées ?",
+    "lang": "fr",
+    "gold_answer": "invoice_AT-2024-0060, facture_CF-2024-017, facture_CF-2024-024, facture_GCD-2024-030, facture_GCD-2024-046, invoice_IF-2024-029, facture_SX-2024-026, facture_SX-2024-035",
+    "gold_values": [],
+    "gold_source": "invoice_AT-2024-0060.pdf",
+    "gold_files": [
+      "invoice_AT-2024-0060.pdf",
+      "facture_CF-2024-017.pdf",
+      "facture_CF-2024-024.pdf",
+      "facture_GCD-2024-030.pdf",
+      "facture_GCD-2024-046.pdf",
+      "invoice_IF-2024-029.pdf",
+      "facture_SX-2024-026.pdf",
+      "facture_SX-2024-035.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "mul_02",
+    "category": "multilingual",
+    "question": "Combien avons-nous payé à AfricaTextiles entre janvier et mars 2024 ?",
+    "lang": "fr",
+    "gold_answer": "31,900.00 USD",
+    "gold_values": [
+      {
+        "currency": "USD",
+        "value": 31900.0
+      }
+    ],
+    "gold_source": "invoice_AT-2024-0007.pdf",
+    "gold_files": [
+      "invoice_AT-2024-0007.pdf",
+      "invoice_AT-2024-0012.pdf",
+      "invoice_AT-2024-0019.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "mul_03",
+    "category": "multilingual",
+    "question": "Quel est le loyer mensuel de l'entrepôt ?",
+    "lang": "fr",
+    "gold_answer": "850 000 FCFA par mois",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 850000
+      }
+    ],
+    "gold_source": "contrat_bail_entrepot.pdf",
+    "gold_files": [
+      "contrat_bail_entrepot.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "mul_04",
+    "category": "multilingual",
+    "question": "Montrez-moi les reçus de plus de 100 000 FCFA.",
+    "lang": "fr",
+    "gold_answer": "RCP-2024-011 (125 000 FCFA), RCP-2024-015 (110 000 FCFA), RCP-2024-023 (150 000 FCFA), RCP-2024-031 (240 000 FCFA)",
+    "gold_values": [],
+    "gold_source": "recu_RCP-2024-011.pdf",
+    "gold_files": [
+      "recu_RCP-2024-011.pdf",
+      "receipt_RCP-2024-015.pdf",
+      "recu_RCP-2024-023.pdf",
+      "recu_RCP-2024-031.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "mul_05",
+    "category": "multilingual",
+    "question": "Quelles sont les conditions de paiement du bail de l'entrepôt ?",
+    "lang": "fr",
+    "gold_answer": "Loyer de 850 000 FCFA par mois payable le 5 de chaque mois, pénalité de retard de 5% par mois, dépôt de garantie de 2 mois.",
+    "gold_values": [],
+    "gold_source": "contrat_bail_entrepot.pdf",
+    "gold_files": [
+      "contrat_bail_entrepot.pdf"
+    ],
+    "sql_path": "semantic"
+  },
+  {
+    "id": "mul_06",
+    "category": "multilingual",
+    "question": "Combien de factures Groupe Comptoir sont impayées ?",
+    "lang": "fr",
+    "gold_answer": "2",
+    "gold_values": [
+      {
+        "currency": "count",
+        "value": 2
+      }
+    ],
+    "gold_source": "facture_GCD-2024-030.pdf",
+    "gold_files": [
+      "facture_GCD-2024-030.pdf",
+      "facture_GCD-2024-046.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "mul_07",
+    "category": "multilingual",
+    "question": "Quel est le montant total des factures de SENEXPORT en 2024 ?",
+    "lang": "fr",
+    "gold_answer": "3 776 000 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 3776000.0
+      }
+    ],
+    "gold_source": "facture_SX-2024-003.pdf",
+    "gold_files": [
+      "facture_SX-2024-003.pdf",
+      "facture_SX-2024-011.pdf",
+      "facture_SX-2024-018.pdf",
+      "facture_SX-2024-026.pdf",
+      "facture_SX-2024-035.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "mul_08",
+    "category": "multilingual",
+    "question": "Quel est le solde du relevé AfricaTextiles au premier trimestre 2024 ?",
+    "lang": "fr",
+    "gold_answer": "5,916.00 USD",
+    "gold_values": [
+      {
+        "currency": "USD",
+        "value": 5916.0
+      }
+    ],
+    "gold_source": "releve_africatextiles_q12024.pdf",
+    "gold_files": [
+      "releve_africatextiles_q12024.pdf"
+    ],
+    "sql_path": "sql"
+  },
+  {
+    "id": "mul_09",
+    "category": "multilingual",
+    "question": "Résumez les pénalités de retard dans le contrat de location.",
+    "lang": "fr",
+    "gold_answer": "5% par mois sur les loyers impayés.",
+    "gold_values": [],
+    "gold_source": "contrat_bail_entrepot.pdf",
+    "gold_files": [
+      "contrat_bail_entrepot.pdf"
+    ],
+    "sql_path": "semantic"
+  },
+  {
+    "id": "mul_10",
+    "category": "multilingual",
+    "question": "Quel est le montant du reçu RCP-2024-023 ?",
+    "lang": "fr",
+    "gold_answer": "150 000 FCFA",
+    "gold_values": [
+      {
+        "currency": "XOF",
+        "value": 150000
+      }
+    ],
+    "gold_source": "recu_RCP-2024-023.pdf",
+    "gold_files": [
+      "recu_RCP-2024-023.pdf"
+    ],
+    "sql_path": "sql"
+  }
+]

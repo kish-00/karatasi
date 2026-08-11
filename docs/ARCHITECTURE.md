@@ -2,287 +2,157 @@
 
 ## Overview
 
-Karatasi is an offline-first document processing pipeline. A scanned form enters as an image and exits as structured, editable field data. Every component runs locally — no cloud calls, no API keys, no internet.
+SME Brief is an offline retrieval-augmented generation (RAG) system that answers business questions about a Senegalese SME's own documents — invoices, receipts, contracts, and supplier statements — in French or English. Every component runs locally: single-file SQLite storage, on-disk embeddings, and a llama.cpp LLM. No cloud calls, no daemon, no API keys.
+
+The system is *hybrid by design*: questions about money (amounts, counts, dates, VAT) are answered with **deterministic SQL** over structured rows, never guessed by an LLM; open questions (summaries, contract clauses) fall back to **semantic RAG** — vector retrieval + LLM answer generation. Every answer carries the source file(s) it came from.
+
+```
+"Combien de factures sont impayées ?"   →   SQL intent  →   "3 factures"  (files: […])
+"What was invoice AT-2024-0007?"        →   SQL intent  →   "8,120.00 USD" (files: [invoice_AT-2024-0007.pdf])
+"Résumez le contrat de bail"            →   semantic    →   LLM answer over retrieved chunks
+```
 
 ## Data Flow
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  INPUT: Scanned form (PDF, JPG, PNG)                            │
-│  - Photo from phone camera                                      │
-│  - Scanned PDF from cybercafé                                   │
-│  - Low-quality, uneven lighting, skewed                         │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 1: IMAGE PREPROCESSING (OpenCV)                          │
-│                                                                  │
-│  Input: Raw scanned image                                        │
-│  Output: Clean, normalized image ready for OCR                   │
-│                                                                  │
-│  Steps:                                                          │
-│  1. Convert to grayscale                                         │
-│  2. Auto-rotate (Tesseract OSD) — detect + correct orientation   │
-│  3. Adaptive thresholding (binarization)                         │
-│  4. Deskew (correct rotation)                                    │
-│  5. Blur detection (Laplacian variance) — warn if blurry         │
-│  6. Denoise (remove scan noise/specks)                           │
-│  7. Morphological ops (close gaps in broken text)                │
-│  8. DPI normalization (scale to 300 DPI)                         │
-│                                                                  │
-│  Why this matters:                                               │
-│  Kenyan government forms are often filled by hand, then          │
-│  photocopied, then scanned. Without preprocessing, OCR           │
-│  accuracy drops below 50%. With it, we hit 85%+ on typed         │
-│  and 70%+ on handwriting.                                        │
-│                                                                  │
-│  Multipage PDFs: PDFs with >1 page are split page-by-page.       │
-│  Each page is rendered at 200 DPI via PyMuPDF, preprocessed,     │
-│  and OCR'd independently. OCR text is joined with page-break     │
-│  markers; form detection + field extraction run on the           │
-│  combined text. Layout uses the first page for field regions.    │
-│  The UI shows a page count indicator when multipage.             │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 1.5: QUALITY CHECKS + NON-FORM DETECTION                  │
-│                                                                  │
-│  After preprocessing, three lightweight checks run:              │
-│                                                                  │
-│  a) Blur detection — Laplacian variance threshold. Score <50    │
-│     = blurry warning; <100 = slightly blurry warning.            │
-│                                                                  │
-│  b) Auto-rotate — Tesseract OSD (orientation + script           │
-│     detection) corrects upside-down pages. Flagged in UI.       │
-│                                                                  │
-│  c) Non-form heuristics — keyword matching + region count        │
-│     decides if the page looks like a government form. If not,    │
-│     a warning is shown but processing continues.                 │
-│                                                                  │
-│  These checks never block processing — they surface warnings     │
-│  in the UI so the user can judge quality.                        │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 1.6: WEB PORTAL DETECTION                                 │
-│                                                                  │
-│  Some PDFs are not scanned forms but web portal printouts        │
-│  (e.g., "Enable JavaScript and cookies to continue").            │
-│  `is_web_portal()` checks the raw OCR text for known             │
-│  portal-only phrases and returns early if matched.               │
-│                                                                  │
-│  This saves the user from waiting through layout detection       │
-│  + LLM inference on an unprocessable file.                       │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 2: LAYOUT DETECTION (rule-based + coordinate analysis)    │
-│                                                                  │
-│  Input: Preprocessed image                                       │
-│  Output: Bounding boxes classified as text, field, table,        │
-│          table_cell                                              │
-│                                                                  │
-│  Approach:                                                       │
-│  - Use contour detection + morphological analysis to find        │
-│    connected components                                          │
-│  - Classify regions by aspect ratio, area, and position          │
-│  - Coordinate-space parameter: `scale_to_original=False` for     │
-│    OCR cropping (preprocessed-space), `scale_to_original=True`   │
-│    for display overlays (original image coordinates)             │
-│                                                                  │
-│  Limitations:                                                    │
-│  - Works best on forms with clear structure (which government    │
-│    forms generally have)                                         │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 3A: TYPED OCR (Tesseract)                                 │
-│                                                                  │
-│  Applied to: full page (PSM 3), then optionally to individual    │
-│  regions (PSM 6).                                                │
-│                                                                  │
-│  Tesseract is mature and fast for printed text. With             │
-│  preprocessed images, it achieves ~90%+ on clean Kenyan forms.   │
-│  Swahili uses `-l eng` (Latin script, no Swahili traineddata     │
-│  available in standard distribution).                            │
-│                                                                  │
-│  OCR results are cached by image content hash (SHA-256 of        │
-│  first 4096 bytes). Re-processing the same file skips            │
-│  Tesseract entirely — ~10s saved per repeat upload.              │
-│                                                                  │
-│  Performance: full-page OCR in ~10.9s on 200 DPI scans           │
-│  (dominant pipeline bottleneck at ~97% of total time).           │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 3B: HANDWRITING OCR — TrOCR (optional, disabled default)  │
-│                                                                  │
-│  Applied to: field regions from layout detection (only when      │
-│  `use_trocr=True`).                                              │
-│                                                                  │
-│  TrOCR is a small transformer (~330M params) fine-tuned on      │
-│  IAM + RIMES handwriting datasets. Handles short field values    │
-│  well (names, dates, ID numbers).                                │
-│                                                                  │
-│  Uses batch inference (`recognize_batch()`) — loads the model    │
-│  once and processes all field regions in a single forward pass,  │
-│  avoiding repeated model load overhead on CPU.                   │
-│                                                                  │
-│  Guards against garbage:                                        │
-│  - Printed-text filter: if TrOCR output matches Tesseract        │
-│    full-page text, it's a form label — skip (not handwriting)    │
-│  - Ink-ratio check: skip nearly blank regions (<1% dark pixels)  │
-│  - Minimum confidence bar: only accept TrOCR output >0.6         │
-│                                                                  │
-│  Performance: ~70s for 14 field regions on CPU (batch).          │
-│  Disabled by default; enable with `use_trocr=True`.              │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 4: FORM UNDERSTANDING (keyword + optional LLM)            │
-│                                                                  │
-│  Input: Raw OCR text + form type                                 │
-│  Output: Structured list of ExtractedField with values           │
-│                                                                  │
-│  Step 4a — Form Type Identification (keyword, <10ms):           │
-│  Regex patterns match known form keywords:                      │
-│    "Reg. 136 A" + "registration of persons act" → ID_APPLICATION │
-│    "land control act" + "consent of land"       → LAND_BOARD     │
-│    "form b3" + "late registration"              → BIRTH_LATE_REG │
-│    "kra pin" + "itax"                           → KRA_PIN        │
-│    etc. for DRIVING_LICENSE, BIRTH_CERTIFICATE, BIRTH_REGISTRATION│
-│  Confidence: starts at 0.50 + 0.15 per matched keyword (cap 0.90)│
-│  This is the PRIMARY detector — fast, deterministic, offline.    │
-│                                                                  │
-│  Step 4b — LLM Fallback (optional, `use_llm=True`):             │
-│  Qwen2.5-1.5B-Q4_K_M via llama.cpp (~2.5GB RAM, mmapped).      │
-│  Used only when keyword confidence < 0.80 (rare; all 5 test      │
-│  forms hit 0.90+ via keywords).                                  │
-│                                                                  │
-│  Step 4c — Field Extraction (template-based, <1ms):             │
-│  Each form type has a template of expected FieldSchema:          │
-│    ID_APPLICATION:        14 fields (surname, first_name, DOB…)  │
-│    LAND_BOARD:             8 fields (applicant_name, property…)  │
-│    BIRTH_LATE_REGISTRATION: 11 fields (child_name, father_name…) │
-│    BIRTH_CERTIFICATE:      7 fields (child_name, DOB, sex…)     │
-│                                                                  │
-│  Step 4d — LLM Field Extraction (optional, `use_llm=True`):     │
-│  Prompt includes OCR text + known labels. Returns JSON array.    │
-│  Parsing handles markdown fences, inline text before/after JSON. │
-│  Disabled by default due to:                                     │
-│  - 45-85s inference time on 1.5B model (vs <1ms template)        │
-│  - Hallucinates values on blank forms                            │
-│  - 1.5B model fails to follow JSON-only formatting instructions  │
-│                                                                  │
-│  Why not use the LLM for everything?                             │
-│  The 1.5B Qwen2.5 model is too slow and unreliable for primary   │
-│  extraction. Keyword detection + template fallback is faster,    │
-│  more reliable, and deterministic. The LLM is reserved for       │
-│  ambiguous cases or future enhancement.                          │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 5: STREAMLIT UI                                          │
-│                                                                  │
-│  Layout:                                                         │
-│  ┌──────────────────────────────────────────────────────┐        │
-│  │  Header: "Karatasi — Kujaza Fomu Kiotomatiki"        │        │
-│  │          (Swahili: "Automatic Form Filling")          │        │
-│  ├──────────────────────────────────────────────────────┤        │
-│  │  ┌──────────┐  ┌──────────────────────────────────┐ │        │
-│  │  │ Upload   │  │ Preview Panel                    │ │        │
-│  │  │ Zone     │  │ - Shows original scanned form     │ │        │
-│  │  │          │  │ - Highlight detected regions      │ │        │
-│  │  │ Drag &   │  │ - Color-coded by type             │ │        │
-│  │  │ drop or  │  │   (LABEL=blue, FIELD=green,       │ │        │
-│  │  │ browse   │  │    CHECKBOX=orange, SIGNATURE=red) │ │        │
-│  │  └──────────┘  └──────────────────────────────────┘ │        │
-│  ├──────────────────────────────────────────────────────┤        │
-│  │  ┌──────────────────────────────────────────────────┐│        │
-│  │  │  Filled Form (editable)                          ││        │
-│  │  │  ┌────────────────────────────────────┐          ││        │
-│  │  │  │ Form Type: [ID Application]         │          ││        │
-│  │  │  │ Full Name: [John Kamau] ◈ Swahili   │          ││        │
-│  │  │  │ ID Number: [12345678]  ◈ English    │          ││        │
-│  │  │  │ Date: [2026-07-29]                  │          ││        │
-│  │  │  │ Signature: [✍ captured]             │          ││        │
-│  │  │  │                                      │          ││        │
-│  │  │  │  [Export PDF]  [Export JSON]         │          ││        │
-│  │  │  └────────────────────────────────────┘          ││        │
-│  │  └──────────────────────────────────────────────────┘│        │
-│  └──────────────────────────────────────────────────────┘        │
-│                                                                  │
-│  Interactions:                                                   │
-│  - Language toggle (English/Swahili) changes all UI labels       │
-│  - Each extracted field is an editable text input                │
-│  - Confidence indicators: green (high), yellow (medium),         │
-│    red (low) — user knows which fields to verify                 │
-│  - Hover over a field highlights its position on the             │
-│    original scan                                                 │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 6: EXPORT                                                │
-│                                                                  │
-│  PDF Export (PyMuPDF):                                          │
-│  - Overlay filled text onto the original form PDF               │
-│  - Uses coordinates from layout detection to place text         │
-│    in the correct field positions                                │
-│  - Embed captured signature image if available                   │
-│  - Print-ready output                                           │
-│                                                                  │
-│  JSON Export:                                                   │
-│  - Structured data for downstream systems                       │
-│  - Schema: {form_type, fields[], language, confidence_scores}   │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│  data/synthetic/generator.py                                             │
+│  - manifest.json   (single source of truth: 60 docs + structured rows)   │
+│  - gold_qa.json    (50 gold questions: values, files, sql_path)          │
+│  - documents/      (generated PDFs + scanned PNGs, gitignored)           │
+└───────────────────────────────┬──────────────────────────────────────────┘
+                                ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│  INGEST  (venv/bin/python -m src.ingest [--db PATH] [--force])           │
+│                                                                          │
+│  1. upsert documents row (type/lang/date/page_count)                     │
+│  2. write structured financial rows (invoices/receipts/contracts/        │
+│     statements) — deterministic SQL answers                              │
+│  3. extract per-page text: PDFs via PyMuPDF, scanned PNGs via            │
+│     bundled Tesseract (LD_LIBRARY_PATH + TESSDATA_PREFIX pinned to venv) │
+│  4. chunk text at line boundaries (MAX_CHUNK_CHARS = 500)                │
+│  5. embed chunks with multilingual-e5-small (384-dim, e5 "passage: ")    │
+│  6. store chunks + float32 vectors                                       │
+└───────────────────────────────┬──────────────────────────────────────────┘
+                                ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│  STORE — single-file SQLite  data/smebrief.db  (no daemon, ACID)         │
+│                                                                          │
+│  documents, invoices, receipts, contracts, statements,                   │
+│  statement_entries, chunks                                               │
+│  + vec_chunks (sqlite-vec vec0: float[384] cosine)                       │
+│  FinanceStore = typed access layer = the swappable seam (pgvector)       │
+└───────────────────────────────┬──────────────────────────────────────────┘
+                                ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│  QUERY  — QueryRouter.answer(question) → Answer(values, files, text,     │
+│                                          route 'sql' | 'semantic')       │
+│                                                                          │
+│  12 ordered SQL intent handlers  ────────────────┐                       │
+│  (_contract_clause, _statement_closing, _by_code,│   if no intent hits   │
+│   _paid_by_supplier, _issued_totals, _issued_list,▼                       │
+│   _receipts_in_month, _unpaid, _receipts_over,   ┌───────────────────────┴──────┐
+│   _vat_total, _supplier_total, _total_receipts)  │  SEMANTIC (src/rag/)         │
+│  └── deterministic SQL answer                    │  retriever: lease-keyword     │
+│       (46 of 50 gold questions)                  │   → full lease PDF, else      │
+│                                                  │   kNN k=8 over vec_chunks     │
+│                                                  │  build_context (4000-char cap)│
+│                                                  │  LLMServer.infer (Qwen2.5-    │
+│                                                  │   1.5B, ≤128 tokens, ≤3 sents)│
+│                                                  │  clean_answer (markers,       │
+│                                                  │   dedupe, truncate)           │
+│                                                  └───────────────────────────────┘
+└───────────────────────────────┬──────────────────────────────────────────┘
+                                ▼
+                         Answer + cited files
 ```
 
-## Memory Budget
+## Query Routing
 
-This is the critical metric for the Africa Deep Tech Challenge. The target is 8GB RAM total.
+`QueryRouter.answer()` (src/retrieval/router.py) tries the 12 ordered intent handlers; the first that matches returns a deterministic SQL answer. If none match, the `_semantic` fallback runs the RAG path.
 
-| Component | Resident Memory | Notes |
+| # | Handler | Triggers | Returns |
+|---|---|---|---|
+| 1 | `_contract_clause` | rent/loyer, penalty/pénalité, payment terms, term/durée, deposit/dépôt, interest/taux, credit line | Clause value from contracts JSON (per contract file) |
+| 2 | `_statement_closing` | solde / closing balance / relevé | Net of statement entries (invoice − payment) |
+| 3 | `_by_code` | code pattern `[A-Z]{2,3}-\d{4}-\d{3,4}` | Invoice total or receipt amount |
+| 4 | `_paid_by_supplier` | pay/paid + supplier + period | Sum of paid invoices in range |
+| 5 | `_issued_totals` | total + issued/émises | Sum of invoice totals in period |
+| 6 | `_issued_list` | issued/émises + period | Invoice numbers |
+| 7 | `_receipts_in_month` | receipt/reçu + month | Receipt numbers + amounts |
+| 8 | `_unpaid` | unpaid/impayé | Unpaid list / count / total (per currency) |
+| 9 | `_receipts_over` | over / plus de + receipt | Receipts > 100 000 XOF: count/sum/list |
+| 10 | `_vat_total` | tva/vat + period | VAT sum (French docs only) |
+| 11 | `_supplier_total` | total + supplier | 2024 yearly spend per supplier |
+| 12 | `_total_receipts` | total receipts | Sum of all receipts |
+| — | `_semantic` | everything else | RAG answer (route = 'semantic') |
+
+Formatting mirrors the gold generator so answers match gold text: XOF uses space-separated thousands (`8 120`), USD uses two decimals (`8,120.00`).
+
+## Database Schema
+
+Defined in `src/storage/db.py`; applied on connect (`PRAGMA foreign_keys = ON`).
+
+| Table | Columns | Notes |
 |---|---|---|
-| OS (Ubuntu minimal / similar) | ~1.5-2 GB | Desktop environment |
-| Python runtime + pip deps | ~300 MB | torch CPU is heaviest dependency |
-| OpenCV + Tesseract | ~250 MB | Shared libraries, loaded at startup |
-| TrOCR (handwriting model) | ~1.5 GB | PyTorch transformer (~300MB weights + runtime) |
-| LLM (Qwen2.5-1.5B-Q4_K_M) | ~2.5 GB | llama.cpp with mmap |
-| PDF processing + misc | ~150 MB | PyMuPDF, ReportLab, PIL |
-| Application data | ~100 MB | Uploaded forms, temp files |
-| Cache + headroom | ~1.5 GB | Prevents OOM during spikes |
-| **Fast path (no LLM, no TrOCR)** | **~2.5 GB** | ✅ Comfortably fits in 8GB |
-| **TrOCR enabled (+1.5GB)** | **~4.0 GB** | ✅ Fits with room |
-| **Full stack (LLM + TrOCR)** | **~6.0-7.0 GB** | Tight — may use swap |
+| `documents` | id, file (UNIQUE), doc_type, lang, date, page_count, ocr_pages, ingested_at | doc_type: invoice/receipt/contract/statement/other |
+| `invoices` | id, doc_id→documents, number, date, supplier, buyer, currency, amount (subtotal), vat, vat_rate, total, paid (0/1), paid_date, payment_terms | |
+| `receipts` | id, doc_id, number, date, amount, currency, from_name | |
+| `contracts` | id, doc_id, contract_type, clauses (JSON dict) | rent, penalty, term, deposit, interest, credit line |
+| `statements` | id, doc_id, supplier, period | e.g. "Q1 2024" |
+| `statement_entries` | id, statement_id, date, ref, amount, kind (invoice\|payment) | closing balance = Σ invoice − Σ payment |
+| `chunks` | id, doc_id, page, chunk_idx, lang, text | chunk_idx is global across pages |
+| `vec_chunks` | rowid, embedding float[384] — sqlite-vec vec0, cosine | rowid = chunks.id |
 
-## Key Design Decisions
+All child rows reference `documents(id) ON DELETE CASCADE` — deleting a document removes its structured rows, chunks, and vectors. `delete_all()` wipes in dependency order for a clean `--force` rebuild.
 
-### Why keyword detection instead of LLM for form type?
-Keyword matching with regex patterns achieves 0.90+ confidence in <10ms for all 5 test forms. The LLM (Qwen2.5-1.5B) takes 45-85s and is less reliable (ignores JSON-only formatting instruction). For deterministic structured tasks on known forms, keyword matching wins.
+## Module Map
 
-### Why templates instead of LLM for field extraction?
-The 1.5B model hallucinates values on blank forms (e.g., "1990-01-01" for a blank date field). Template-based extraction returns empty fields with correct labels — deterministic, zero tokens, <1ms. The LLM is reserved for ambiguous cases or future filled-form enhancement.
+| Module | Role | Key surface |
+|---|---|---|
+| `src/embeddings.py` | Multilingual embedding helpers | `embed_documents`, `embed_query`; e5 prefixes; `local_files_only`; lru_cache singleton |
+| `src/ingest/ingest.py` | Corpus → store | `ingest_manifest()`, per-type loaders, `extract_pdf_text`, `extract_image_text`, `chunk_document` |
+| `src/storage/db.py` | Schema + connection | `connect(db_path)` (loads sqlite-vec, applies SCHEMA), `default_db_path()` |
+| `src/storage/store.py` | Typed store | `FinanceStore`: `run_sql`, `upsert_document`, `delete_*`, `set_*`, `add_chunks`, `vector_search`; `get_store()` singleton |
+| `src/retrieval/router.py` | Intent routing | `QueryRouter.answer()`, `Answer` dataclass, entity extraction (suppliers, months, periods) |
+| `src/rag/retriever.py` | Retrieval | lease-keyword routing to the full lease PDF, else `vector_search(k=8)` |
+| `src/rag/context.py` | Context assembly | `build_context(chunks, max_chars=4000)` — `[file page N]` headers |
+| `src/rag/answers.py` | LLM answer generation | `generate_answer`, `clean_answer`; ≤3 sentences, ≤128 tokens |
+| `src/rag/__init__.py` | Semantic pipeline | `answer_semantic(store, q, max_chunks=8, max_chars=4000) → (files, text)` |
+| `src/llm/serve.py` | LLM server | `LLMServer.infer()`, lazy load, mmap, 300s idle unload; `get_server()` |
+| `eval/run_eval.py` | Gold-QA harness | scores values + files per question; exit 0 only on 50/50 |
 
-### Why Streamlit instead of React + FastAPI?
-The existing `ai-pdf-assistant` project uses React + FastAPI. That's client-server, which means two processes, more RAM, and a more complex offline packaging story. Streamlit is a single Python process — simpler to deploy, demo, and debug. The trade-off is less visual polish, but for a hackathon, demo reliability beats pixel perfection.
+## Design Decisions
 
-### Why a 1.5B LLM instead of 7B?
-Phi-3-mini (3.8B) Q4 uses ~2.5GB. Llama 3 8B Q4 uses ~5.5GB. For form parsing (identifying types, extracting fields from clean OCR text), a 1.5B model is sufficient. The benchmark score rewards accuracy ÷ memory — a slightly less accurate model that uses 1/4 the memory scores higher.
+### Single-file SQLite + sqlite-vec instead of a vector DB daemon
+The knowledge base is one SQLite file: structured rows, chunk text, and float32 embeddings coexist; cosine kNN runs on the `vec_chunks` vec0 virtual table. No separate Chroma/FAISS store, no daemon to keep alive — ideal for an offline laptop demo, and the whole store is a single copyable artifact. `FinanceStore` is the seam: the same schema ports to Postgres/pgvector if scale ever demands it.
 
-### Why TrOCR for handwriting instead of a vision model?
-Small vision-language models that can read handwriting from images (like TrOCR) are ~300MB weights. Larger VLMs that can do both detection and reading (like LLaVA-NeXT) are 7B+ and won't fit. The staged approach (layout detection → crop → TrOCR) is the most memory-efficient way to handle handwriting. Note that PyTorch adds ~1GB runtime overhead beyond the model weights.
+### Deterministic SQL first, LLM never for money
+Money answers must be exact. 46 of 50 gold questions are answered by SQL over structured rows — an LLM can hallucinate a total, SQL cannot. The LLM is used only for the 4 open questions (summaries, clause descriptions) where determinism isn't required.
 
-### Why `use_llm` and `use_trocr` are separate flags?
-They serve independent purposes: LLM for structured text understanding (form type, field extraction) and TrOCR for image-to-text (handwriting reading). Both are disabled by default to keep the fast path under 12s and under 2.5GB RAM. Users explicitly enable them for filled forms or ambiguous cases where the higher accuracy justifies the 1.5-4GB additional memory cost.
+### e5 passage/query prefixing
+multilingual-e5-small improves retrieval when passages are prefixed with `"passage: "` and queries with `"query: "`. The storage layer is prefix-agnostic — it stores plain vectors; only the embed callers apply prefixes.
 
-### Why not always-on TrOCR + LLM?
-The target demo environment is a laptop with 8GB RAM and no GPU. Loading both models simultaneously consumes ~6-7GB, leaving only ~1GB for OS + other apps. By defaulting both to off, Karatasi runs in ~2.5GB with a 12s pipeline — comfortable on any modern laptop. The UI provides clear toggles so users can opt in when they need handwriting recognition or LLM-based field extraction.
+### Offline-only model loading
+Embeddings load with `local_files_only=True` and the LLM points at a local GGUF. A machine without the models/ directory fails loudly at first inference rather than silently phoning home.
+
+### Chunking preserves line structure
+Chunks split at line boundaries (≤500 chars), never mid-line. Invoice, receipt, and contract text is line-structured, so chunks stay readable and self-contained — retrieval quality depends on this.
+
+### 4000-char context inside a 4096-token window
+`build_context` accumulates `[file page N]`-labelled blocks up to a 4000-char cap, leaving the 4096-token LLM window room for the system prompt, question, and answer.
+
+### Lease questions bypass kNN
+A contract's clauses span its whole text; cosine similarity would return only the most similar chunk. Lease-keyword questions therefore route to the full warehouse-lease PDF, ordered by page.
+
+### Answer cleaning keeps LLM output tight
+`clean_answer` strips `assistant:` / `réponse:` / `answer:` markers and a repeated-question prefix, dedupes sentences, drops incomplete trailing sentences, and caps at 3 sentences — so a 1.5B model's output stays a concise, citation-ready answer.
+
+## Evaluation Loop
+
+`eval/run_eval.py` loads `data/synthetic/gold_qa.json` (50 questions; fields: id, category, question, lang, gold_answer, gold_values `[{currency, value}]`, gold_source, gold_files, sql_path) and runs each through `QueryRouter`. A question passes when its **values** (currency + value, rounded 3dp, sorted) and **files** (set equality) both match gold. Any failure prints `FAIL <id> [route] <question>` with got-vs-gold; the exit code is 0 **only** on 50/50.
+
+```bash
+venv/bin/python -m src.ingest --force   # rebuild the store from the manifest
+venv/bin/python eval/run_eval.py        # PASS 50/50 FAIL_IDS=[] (exit 0)
+```

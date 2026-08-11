@@ -7,7 +7,7 @@ Key design:
 - Lazy loading: model loads on first inference
 - Memory-mapped (mmap): keeps model on disk until needed
 - Idle timeout: auto-unloads after period of inactivity
-- Context window: 2048 tokens (sufficient for form text)
+- Context window: 4096 tokens (RAG context assembly + answer generation)
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 _MODEL_DIR = Path(__file__).resolve().parents[2] / "models"
 _MODEL_FILENAME = "qwen2.5-1.5b-instruct-q4_k_m.gguf"
 
-_CONTEXT_SIZE = 2048
+_CONTEXT_SIZE = 4096
 _MAX_TOKENS = 512
 _TEMPERATURE = 0.1
 _TOP_P = 0.9

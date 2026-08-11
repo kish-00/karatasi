@@ -1,0 +1,1490 @@
+{
+  "meta": {
+    "seed": 42,
+    "counts": {
+      "invoices": 34,
+      "receipts": 14,
+      "contracts": 6,
+      "statements": 6,
+      "total": 60
+    }
+  },
+  "invoices": [
+    {
+      "code": "ACM-2024-007",
+      "date": "2024-06-27",
+      "supplier": "Atelier Cousu-Main",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Robes cousues",
+          12,
+          25000
+        ],
+        [
+          "Chemises",
+          15,
+          18000
+        ]
+      ],
+      "amount": 570000,
+      "vat": 102600.0,
+      "vat_rate": 18.0,
+      "total": 672600.0,
+      "paid": true,
+      "paid_date": "2024-07-05",
+      "terms": "Paiement à 30 jours",
+      "lang": "fr",
+      "scanned": true,
+      "file": "facture_ACM-2024-007.png"
+    },
+    {
+      "code": "AF-2024-006",
+      "date": "2024-09-25",
+      "supplier": "Ashanti Fabrics",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Kente strips",
+          10,
+          185.0
+        ]
+      ],
+      "amount": 1850.0,
+      "vat": 296.0,
+      "vat_rate": 16.0,
+      "total": 2146.0,
+      "paid": true,
+      "paid_date": "2024-10-02",
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": true,
+      "file": "invoice_AF-2024-006.png"
+    },
+    {
+      "code": "AT-2024-0007",
+      "date": "2024-01-15",
+      "supplier": "AfricaTextiles Ltd",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Wax fabric 6 yards",
+          10,
+          400.0
+        ],
+        [
+          "Polyester blend",
+          25,
+          120.0
+        ]
+      ],
+      "amount": 7000.0,
+      "vat": 1120.0,
+      "vat_rate": 16.0,
+      "total": 8120.0,
+      "paid": true,
+      "paid_date": "2024-01-20",
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": false,
+      "file": "invoice_AT-2024-0007.pdf"
+    },
+    {
+      "code": "AT-2024-0012",
+      "date": "2024-02-12",
+      "supplier": "AfricaTextiles Ltd",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Cotton print",
+          30,
+          150.0
+        ],
+        [
+          "Silk rolls",
+          8,
+          550.0
+        ]
+      ],
+      "amount": 8900.0,
+      "vat": 1424.0,
+      "vat_rate": 16.0,
+      "total": 10324.0,
+      "paid": true,
+      "paid_date": "2024-02-18",
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": false,
+      "file": "invoice_AT-2024-0012.pdf"
+    },
+    {
+      "code": "AT-2024-0019",
+      "date": "2024-03-08",
+      "supplier": "AfricaTextiles Ltd",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Wax fabric 6 yards",
+          20,
+          400.0
+        ],
+        [
+          "Lace fabric",
+          12,
+          300.0
+        ]
+      ],
+      "amount": 11600.0,
+      "vat": 1856.0,
+      "vat_rate": 16.0,
+      "total": 13456.0,
+      "paid": true,
+      "paid_date": "2024-03-15",
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": false,
+      "file": "invoice_AT-2024-0019.pdf"
+    },
+    {
+      "code": "AT-2024-0027",
+      "date": "2024-03-28",
+      "supplier": "AfricaTextiles Ltd",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Denim rolls",
+          15,
+          220.0
+        ],
+        [
+          "Chiffon",
+          10,
+          180.0
+        ]
+      ],
+      "amount": 5100.0,
+      "vat": 816.0,
+      "vat_rate": 16.0,
+      "total": 5916.0,
+      "paid": true,
+      "paid_date": "2024-04-05",
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": false,
+      "file": "invoice_AT-2024-0027.pdf"
+    },
+    {
+      "code": "AT-2024-0041",
+      "date": "2024-06-18",
+      "supplier": "AfricaTextiles Ltd",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Wax fabric 6 yards",
+          25,
+          420.0
+        ],
+        [
+          "Kente print",
+          10,
+          260.0
+        ]
+      ],
+      "amount": 13100.0,
+      "vat": 2096.0,
+      "vat_rate": 16.0,
+      "total": 15196.0,
+      "paid": true,
+      "paid_date": "2024-06-25",
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": false,
+      "file": "invoice_AT-2024-0041.pdf"
+    },
+    {
+      "code": "AT-2024-0060",
+      "date": "2024-11-05",
+      "supplier": "AfricaTextiles Ltd",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Wool suiting",
+          20,
+          310.0
+        ]
+      ],
+      "amount": 6200.0,
+      "vat": 992.0,
+      "vat_rate": 16.0,
+      "total": 7192.0,
+      "paid": false,
+      "paid_date": null,
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": false,
+      "file": "invoice_AT-2024-0060.pdf"
+    },
+    {
+      "code": "CF-2024-002",
+      "date": "2024-01-30",
+      "supplier": "Cotonou Fabrics SARL",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Tissu imprimé",
+          25,
+          12000
+        ],
+        [
+          "Voile",
+          10,
+          21000
+        ]
+      ],
+      "amount": 510000,
+      "vat": 91800.0,
+      "vat_rate": 18.0,
+      "total": 601800.0,
+      "paid": true,
+      "paid_date": "2024-02-08",
+      "terms": "Paiement à 45 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_CF-2024-002.pdf"
+    },
+    {
+      "code": "CF-2024-009",
+      "date": "2024-03-20",
+      "supplier": "Cotonou Fabrics SARL",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Coton gaufré",
+          14,
+          15500
+        ]
+      ],
+      "amount": 217000,
+      "vat": 39060.0,
+      "vat_rate": 18.0,
+      "total": 256060.0,
+      "paid": true,
+      "paid_date": "2024-03-28",
+      "terms": "Paiement à 45 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_CF-2024-009.pdf"
+    },
+    {
+      "code": "CF-2024-017",
+      "date": "2024-06-05",
+      "supplier": "Cotonou Fabrics SARL",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Tissu imprimé",
+          30,
+          12000
+        ],
+        [
+          "Lurex",
+          6,
+          48000
+        ]
+      ],
+      "amount": 648000,
+      "vat": 116640.0,
+      "vat_rate": 18.0,
+      "total": 764640.0,
+      "paid": false,
+      "paid_date": null,
+      "terms": "Paiement à 45 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_CF-2024-017.pdf"
+    },
+    {
+      "code": "CF-2024-024",
+      "date": "2024-10-19",
+      "supplier": "Cotonou Fabrics SARL",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Voile",
+          15,
+          21000
+        ]
+      ],
+      "amount": 315000,
+      "vat": 56700.0,
+      "vat_rate": 18.0,
+      "total": 371700.0,
+      "paid": false,
+      "paid_date": null,
+      "terms": "Paiement à 45 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_CF-2024-024.pdf"
+    },
+    {
+      "code": "GCD-2024-001",
+      "date": "2024-01-10",
+      "supplier": "Groupe Comptoir de Dakar",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Tissu wax 6 yards",
+          12,
+          45000
+        ],
+        [
+          "Coton imprimé",
+          20,
+          18500
+        ]
+      ],
+      "amount": 910000,
+      "vat": 163800.0,
+      "vat_rate": 18.0,
+      "total": 1073800.0,
+      "paid": true,
+      "paid_date": "2024-01-18",
+      "terms": "Paiement à 60 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_GCD-2024-001.pdf"
+    },
+    {
+      "code": "GCD-2024-008",
+      "date": "2024-02-05",
+      "supplier": "Groupe Comptoir de Dakar",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Pagne tissé",
+          15,
+          38000
+        ],
+        [
+          "Soie",
+          6,
+          62000
+        ]
+      ],
+      "amount": 942000,
+      "vat": 169560.0,
+      "vat_rate": 18.0,
+      "total": 1111560.0,
+      "paid": true,
+      "paid_date": "2024-02-12",
+      "terms": "Paiement à 60 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_GCD-2024-008.pdf"
+    },
+    {
+      "code": "GCD-2024-014",
+      "date": "2024-03-15",
+      "supplier": "Groupe Comptoir de Dakar",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Tissu wax 6 yards",
+          18,
+          45000
+        ],
+        [
+          "Coton brodé",
+          10,
+          24000
+        ]
+      ],
+      "amount": 1050000,
+      "vat": 189000.0,
+      "vat_rate": 18.0,
+      "total": 1239000.0,
+      "paid": true,
+      "paid_date": "2024-03-22",
+      "terms": "Paiement à 60 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_GCD-2024-014.pdf"
+    },
+    {
+      "code": "GCD-2024-021",
+      "date": "2024-05-20",
+      "supplier": "Groupe Comptoir de Dakar",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Lin",
+          14,
+          30000
+        ],
+        [
+          "Pagne tissé",
+          12,
+          38000
+        ]
+      ],
+      "amount": 876000,
+      "vat": 157680.0,
+      "vat_rate": 18.0,
+      "total": 1033680.0,
+      "paid": true,
+      "paid_date": "2024-05-28",
+      "terms": "Paiement à 60 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_GCD-2024-021.pdf"
+    },
+    {
+      "code": "GCD-2024-030",
+      "date": "2024-07-10",
+      "supplier": "Groupe Comptoir de Dakar",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Tissu wax 6 yards",
+          10,
+          47000
+        ],
+        [
+          "Mousseline",
+          8,
+          29000
+        ]
+      ],
+      "amount": 702000,
+      "vat": 126360.0,
+      "vat_rate": 18.0,
+      "total": 828360.0,
+      "paid": false,
+      "paid_date": null,
+      "terms": "Paiement à 60 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_GCD-2024-030.pdf"
+    },
+    {
+      "code": "GCD-2024-038",
+      "date": "2024-09-02",
+      "supplier": "Groupe Comptoir de Dakar",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Velours",
+          9,
+          54000
+        ],
+        [
+          "Coton imprimé",
+          25,
+          18500
+        ]
+      ],
+      "amount": 948500,
+      "vat": 170730.0,
+      "vat_rate": 18.0,
+      "total": 1119230.0,
+      "paid": true,
+      "paid_date": "2024-09-10",
+      "terms": "Paiement à 60 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_GCD-2024-038.pdf"
+    },
+    {
+      "code": "GCD-2024-046",
+      "date": "2024-12-12",
+      "supplier": "Groupe Comptoir de Dakar",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Tissu wax 6 yards",
+          22,
+          47000
+        ]
+      ],
+      "amount": 1034000,
+      "vat": 186120.0,
+      "vat_rate": 18.0,
+      "total": 1220120.0,
+      "paid": false,
+      "paid_date": null,
+      "terms": "Paiement à 60 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_GCD-2024-046.pdf"
+    },
+    {
+      "code": "IF-2024-005",
+      "date": "2024-04-09",
+      "supplier": "IndoFab Textiles",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Rayon challis",
+          40,
+          85.0
+        ],
+        [
+          "Crepe",
+          15,
+          140.0
+        ]
+      ],
+      "amount": 5500.0,
+      "vat": 880.0,
+      "vat_rate": 16.0,
+      "total": 6380.0,
+      "paid": true,
+      "paid_date": "2024-04-19",
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": false,
+      "file": "invoice_IF-2024-005.pdf"
+    },
+    {
+      "code": "IF-2024-016",
+      "date": "2024-07-22",
+      "supplier": "IndoFab Textiles",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Silk twill",
+          12,
+          480.0
+        ]
+      ],
+      "amount": 5760.0,
+      "vat": 921.6,
+      "vat_rate": 16.0,
+      "total": 6681.6,
+      "paid": true,
+      "paid_date": "2024-07-30",
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": false,
+      "file": "invoice_IF-2024-016.pdf"
+    },
+    {
+      "code": "IF-2024-029",
+      "date": "2024-10-03",
+      "supplier": "IndoFab Textiles",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Rayon challis",
+          25,
+          85.0
+        ],
+        [
+          "Jacquard",
+          10,
+          260.0
+        ]
+      ],
+      "amount": 4725.0,
+      "vat": 756.0,
+      "vat_rate": 16.0,
+      "total": 5481.0,
+      "paid": false,
+      "paid_date": null,
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": false,
+      "file": "invoice_IF-2024-029.pdf"
+    },
+    {
+      "code": "LTM-2024-011",
+      "date": "2024-07-11",
+      "supplier": "Lagos Textile Mart",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Ankara print",
+          18,
+          95.0
+        ],
+        [
+          "Tulle",
+          10,
+          60.0
+        ]
+      ],
+      "amount": 2310.0,
+      "vat": 369.6,
+      "vat_rate": 16.0,
+      "total": 2679.6,
+      "paid": true,
+      "paid_date": "2024-07-19",
+      "terms": "Net 15 days",
+      "lang": "en",
+      "scanned": true,
+      "file": "invoice_LTM-2024-011.png"
+    },
+    {
+      "code": "SX-2024-003",
+      "date": "2024-01-22",
+      "supplier": "SENEXPORT SA",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Satin",
+          10,
+          36000
+        ],
+        [
+          "Taffetas",
+          12,
+          28000
+        ]
+      ],
+      "amount": 696000,
+      "vat": 125280.0,
+      "vat_rate": 18.0,
+      "total": 821280.0,
+      "paid": true,
+      "paid_date": "2024-02-01",
+      "terms": "Paiement à 60 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_SX-2024-003.pdf"
+    },
+    {
+      "code": "SX-2024-011",
+      "date": "2024-02-25",
+      "supplier": "SENEXPORT SA",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Coton piqué",
+          20,
+          16000
+        ]
+      ],
+      "amount": 320000,
+      "vat": 57600.0,
+      "vat_rate": 18.0,
+      "total": 377600.0,
+      "paid": true,
+      "paid_date": "2024-03-05",
+      "terms": "Paiement à 60 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_SX-2024-011.pdf"
+    },
+    {
+      "code": "SX-2024-018",
+      "date": "2024-04-14",
+      "supplier": "SENEXPORT SA",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Bazin riche",
+          8,
+          75000
+        ],
+        [
+          "Pagne tissé",
+          10,
+          38000
+        ]
+      ],
+      "amount": 980000,
+      "vat": 176400.0,
+      "vat_rate": 18.0,
+      "total": 1156400.0,
+      "paid": true,
+      "paid_date": "2024-04-22",
+      "terms": "Paiement à 60 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_SX-2024-018.pdf"
+    },
+    {
+      "code": "SX-2024-026",
+      "date": "2024-08-08",
+      "supplier": "SENEXPORT SA",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Satin",
+          15,
+          36000
+        ]
+      ],
+      "amount": 540000,
+      "vat": 97200.0,
+      "vat_rate": 18.0,
+      "total": 637200.0,
+      "paid": false,
+      "paid_date": null,
+      "terms": "Paiement à 60 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_SX-2024-026.pdf"
+    },
+    {
+      "code": "SX-2024-035",
+      "date": "2024-11-18",
+      "supplier": "SENEXPORT SA",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Taffetas",
+          18,
+          28000
+        ],
+        [
+          "Coton piqué",
+          10,
+          16000
+        ]
+      ],
+      "amount": 664000,
+      "vat": 119520.0,
+      "vat_rate": 18.0,
+      "total": 783520.0,
+      "paid": false,
+      "paid_date": null,
+      "terms": "Paiement à 60 jours",
+      "lang": "fr",
+      "scanned": false,
+      "file": "facture_SX-2024-035.pdf"
+    },
+    {
+      "code": "TE-2024-014",
+      "date": "2024-10-09",
+      "supplier": "TransExpress Sénégal",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Transport conteneur 20ft",
+          1,
+          850000
+        ]
+      ],
+      "amount": 850000,
+      "vat": 153000.0,
+      "vat_rate": 18.0,
+      "total": 1003000.0,
+      "paid": true,
+      "paid_date": "2024-10-18",
+      "terms": "Paiement à 15 jours",
+      "lang": "fr",
+      "scanned": true,
+      "file": "facture_TE-2024-014.png"
+    },
+    {
+      "code": "TP-2024-010",
+      "date": "2024-05-06",
+      "supplier": "Tissus du Plateau SARL",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Tissu wax 6 yards",
+          6,
+          48000
+        ],
+        [
+          "Coton imprimé",
+          15,
+          19000
+        ]
+      ],
+      "amount": 573000,
+      "vat": 103140.0,
+      "vat_rate": 18.0,
+      "total": 676140.0,
+      "paid": true,
+      "paid_date": "2024-05-16",
+      "terms": "Paiement à 30 jours",
+      "lang": "fr",
+      "scanned": true,
+      "file": "facture_TP-2024-010.png"
+    },
+    {
+      "code": "TP-2024-020",
+      "date": "2024-08-21",
+      "supplier": "Tissus du Plateau SARL",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "XOF",
+      "items": [
+        [
+          "Pagne tissé",
+          8,
+          39000
+        ]
+      ],
+      "amount": 312000,
+      "vat": 56160.0,
+      "vat_rate": 18.0,
+      "total": 368160.0,
+      "paid": true,
+      "paid_date": "2024-08-30",
+      "terms": "Paiement à 30 jours",
+      "lang": "fr",
+      "scanned": true,
+      "file": "facture_TP-2024-020.png"
+    },
+    {
+      "code": "WH-2024-004",
+      "date": "2024-05-14",
+      "supplier": "WeaveHouse Ghana Ltd",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Kente strips",
+          20,
+          180.0
+        ],
+        [
+          "Adinkra print",
+          15,
+          95.0
+        ]
+      ],
+      "amount": 5025.0,
+      "vat": 804.0,
+      "vat_rate": 16.0,
+      "total": 5829.0,
+      "paid": true,
+      "paid_date": "2024-05-20",
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": false,
+      "file": "invoice_WH-2024-004.pdf"
+    },
+    {
+      "code": "WH-2024-013",
+      "date": "2024-08-26",
+      "supplier": "WeaveHouse Ghana Ltd",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Kente strips",
+          12,
+          180.0
+        ]
+      ],
+      "amount": 2160.0,
+      "vat": 345.6,
+      "vat_rate": 16.0,
+      "total": 2505.6,
+      "paid": true,
+      "paid_date": "2024-09-03",
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": false,
+      "file": "invoice_WH-2024-013.pdf"
+    },
+    {
+      "code": "WH-2024-022",
+      "date": "2024-11-28",
+      "supplier": "WeaveHouse Ghana Ltd",
+      "buyer": "Aya Traoré (Import/Export)",
+      "currency": "USD",
+      "items": [
+        [
+          "Adinkra print",
+          20,
+          95.0
+        ],
+        [
+          "Fugu fabric",
+          8,
+          210.0
+        ]
+      ],
+      "amount": 3580.0,
+      "vat": 572.8,
+      "vat_rate": 16.0,
+      "total": 4152.8,
+      "paid": true,
+      "paid_date": "2024-12-06",
+      "terms": "Net 30 days",
+      "lang": "en",
+      "scanned": false,
+      "file": "invoice_WH-2024-022.pdf"
+    }
+  ],
+  "receipts": [
+    {
+      "code": "RCP-2024-002",
+      "date": "2024-01-12",
+      "amount": 45000,
+      "currency": "XOF",
+      "from_name": "Boutique Chez Fatou",
+      "method": "Virement bancaire",
+      "lang": "fr",
+      "file": "recu_RCP-2024-002.pdf"
+    },
+    {
+      "code": "RCP-2024-006",
+      "date": "2024-02-09",
+      "amount": 85000,
+      "currency": "XOF",
+      "from_name": "Marché Sandaga (Stall 42)",
+      "method": "Espèces",
+      "lang": "fr",
+      "file": "recu_RCP-2024-006.pdf"
+    },
+    {
+      "code": "RCP-2024-011",
+      "date": "2024-03-15",
+      "amount": 125000,
+      "currency": "XOF",
+      "from_name": "Boutique Chez Fatou",
+      "method": "Virement bancaire",
+      "lang": "fr",
+      "file": "recu_RCP-2024-011.pdf"
+    },
+    {
+      "code": "RCP-2024-015",
+      "date": "2024-04-18",
+      "amount": 110000,
+      "currency": "XOF",
+      "from_name": "Mamadou Diallo",
+      "method": "Bank transfer",
+      "lang": "en",
+      "file": "receipt_RCP-2024-015.pdf"
+    },
+    {
+      "code": "RCP-2024-019",
+      "date": "2024-04-03",
+      "amount": 65000,
+      "currency": "XOF",
+      "from_name": "Aminata Sow",
+      "method": "Espèces",
+      "lang": "fr",
+      "file": "recu_RCP-2024-019.pdf"
+    },
+    {
+      "code": "RCP-2024-023",
+      "date": "2024-05-30",
+      "amount": 150000,
+      "currency": "XOF",
+      "from_name": "Mamadou Diallo",
+      "method": "Virement bancaire",
+      "lang": "fr",
+      "file": "recu_RCP-2024-023.pdf"
+    },
+    {
+      "code": "RCP-2024-026",
+      "date": "2024-07-05",
+      "amount": 75000,
+      "currency": "XOF",
+      "from_name": "Aminata Sow",
+      "method": "Cash",
+      "lang": "en",
+      "file": "receipt_RCP-2024-026.pdf"
+    },
+    {
+      "code": "RCP-2024-031",
+      "date": "2024-08-14",
+      "amount": 240000,
+      "currency": "XOF",
+      "from_name": "Boutique Chez Fatou",
+      "method": "Virement bancaire",
+      "lang": "fr",
+      "file": "recu_RCP-2024-031.pdf"
+    },
+    {
+      "code": "RCP-2024-033",
+      "date": "2024-09-12",
+      "amount": 90000,
+      "currency": "XOF",
+      "from_name": "Boutique Chez Fatou",
+      "method": "Bank transfer",
+      "lang": "en",
+      "file": "receipt_RCP-2024-033.pdf"
+    },
+    {
+      "code": "RCP-2024-037",
+      "date": "2024-10-22",
+      "amount": 95000,
+      "currency": "XOF",
+      "from_name": "Marché Sandaga (Stall 42)",
+      "method": "Espèces",
+      "lang": "fr",
+      "file": "recu_RCP-2024-037.pdf"
+    },
+    {
+      "code": "RCP-2024-040",
+      "date": "2024-11-07",
+      "amount": 55000,
+      "currency": "XOF",
+      "from_name": "Marché Sandaga (Stall 42)",
+      "method": "Espèces",
+      "lang": "fr",
+      "scanned": true,
+      "file": "recu_RCP-2024-040.png"
+    },
+    {
+      "code": "RCP-2024-044",
+      "date": "2024-12-03",
+      "amount": 78000,
+      "currency": "XOF",
+      "from_name": "Boutique Chez Fatou",
+      "method": "Virement bancaire",
+      "lang": "fr",
+      "scanned": true,
+      "file": "recu_RCP-2024-044.png"
+    },
+    {
+      "code": "RCP-2024-048",
+      "date": "2024-12-19",
+      "amount": 62000,
+      "currency": "XOF",
+      "from_name": "Aminata Sow",
+      "method": "Espèces",
+      "lang": "fr",
+      "scanned": true,
+      "file": "recu_RCP-2024-048.png"
+    },
+    {
+      "code": "RCP-2024-050",
+      "date": "2024-11-25",
+      "amount": 88000,
+      "currency": "XOF",
+      "from_name": "Mamadou Diallo",
+      "method": "Bank transfer",
+      "lang": "en",
+      "scanned": true,
+      "file": "receipt_RCP-2024-050.png"
+    }
+  ],
+  "contracts": [
+    {
+      "file": "contrat_bail_entrepot.pdf",
+      "type": "warehouse_lease",
+      "lang": "fr",
+      "clauses": {
+        "monthly_rent_fcfa": 850000,
+        "term_months": 36,
+        "deposit_months": 2,
+        "due_day": 5,
+        "late_penalty_pct": 5.0,
+        "currency": "XOF"
+      },
+      "title": "CONTRAT DE LOCATION D'ENTREPÔT",
+      "body": []
+    },
+    {
+      "file": "contrat_appro_senexport.pdf",
+      "type": "supply_agreement",
+      "lang": "fr",
+      "clauses": {
+        "late_penalty_pct": 2.0,
+        "payment_days": 60,
+        "currency": "XOF"
+      },
+      "title": "CONTRAT D'APPROVISIONNEMENT",
+      "body": []
+    },
+    {
+      "file": "supply_agreement_africatextiles.pdf",
+      "type": "supply_agreement",
+      "lang": "en",
+      "clauses": {
+        "late_penalty_pct": 2.0,
+        "payment_days": 30,
+        "currency": "USD"
+      },
+      "title": "SUPPLY AGREEMENT",
+      "body": []
+    },
+    {
+      "file": "contrat_transport.pdf",
+      "type": "transport_contract",
+      "lang": "fr",
+      "clauses": {
+        "container_rate_fcfa": 850000,
+        "currency": "XOF"
+      },
+      "title": "CONTRAT DE TRANSPORT",
+      "body": []
+    },
+    {
+      "file": "convention_credit_bancaire.pdf",
+      "type": "bank_credit_line",
+      "lang": "fr",
+      "clauses": {
+        "credit_line_fcfa": 5000000,
+        "interest_pct": 9.0,
+        "currency": "XOF"
+      },
+      "title": "CONVENTION DE LIGNE DE CRÉDIT",
+      "body": []
+    },
+    {
+      "file": "distribution_agreement_weavehouse.pdf",
+      "type": "distribution_agreement",
+      "lang": "en",
+      "clauses": {
+        "term_years": 5,
+        "currency": "USD"
+      },
+      "title": "EXCLUSIVE DISTRIBUTION AGREEMENT",
+      "body": []
+    }
+  ],
+  "statements": [
+    {
+      "supplier": "AfricaTextiles Ltd",
+      "period": "Q1 2024",
+      "start": "2024-01-01",
+      "end": "2024-03-31",
+      "lang": "en",
+      "entries": [
+        {
+          "date": "2024-01-15",
+          "ref": "AT-2024-0007",
+          "amount": 8120.0,
+          "kind": "invoice"
+        },
+        {
+          "date": "2024-01-20",
+          "ref": "AT-2024-0007",
+          "amount": 8120.0,
+          "kind": "payment"
+        },
+        {
+          "date": "2024-02-12",
+          "ref": "AT-2024-0012",
+          "amount": 10324.0,
+          "kind": "invoice"
+        },
+        {
+          "date": "2024-02-18",
+          "ref": "AT-2024-0012",
+          "amount": 10324.0,
+          "kind": "payment"
+        },
+        {
+          "date": "2024-03-08",
+          "ref": "AT-2024-0019",
+          "amount": 13456.0,
+          "kind": "invoice"
+        },
+        {
+          "date": "2024-03-15",
+          "ref": "AT-2024-0019",
+          "amount": 13456.0,
+          "kind": "payment"
+        },
+        {
+          "date": "2024-03-28",
+          "ref": "AT-2024-0027",
+          "amount": 5916.0,
+          "kind": "invoice"
+        }
+      ],
+      "issued": 37816.0,
+      "received": 31900.0,
+      "closing": 5916.0,
+      "file": "releve_africatextiles_q12024.pdf"
+    },
+    {
+      "supplier": "AfricaTextiles Ltd",
+      "period": "Q2 2024",
+      "start": "2024-04-01",
+      "end": "2024-06-30",
+      "lang": "en",
+      "entries": [
+        {
+          "date": "2024-04-05",
+          "ref": "AT-2024-0027",
+          "amount": 5916.0,
+          "kind": "payment"
+        },
+        {
+          "date": "2024-06-18",
+          "ref": "AT-2024-0041",
+          "amount": 15196.0,
+          "kind": "invoice"
+        },
+        {
+          "date": "2024-06-25",
+          "ref": "AT-2024-0041",
+          "amount": 15196.0,
+          "kind": "payment"
+        }
+      ],
+      "issued": 15196.0,
+      "received": 21112.0,
+      "closing": -5916.0,
+      "file": "releve_africatextiles_q22024.pdf"
+    },
+    {
+      "supplier": "Groupe Comptoir de Dakar",
+      "period": "Q1 2024",
+      "start": "2024-01-01",
+      "end": "2024-03-31",
+      "lang": "fr",
+      "entries": [
+        {
+          "date": "2024-01-10",
+          "ref": "GCD-2024-001",
+          "amount": 1073800.0,
+          "kind": "invoice"
+        },
+        {
+          "date": "2024-01-18",
+          "ref": "GCD-2024-001",
+          "amount": 1073800.0,
+          "kind": "payment"
+        },
+        {
+          "date": "2024-02-05",
+          "ref": "GCD-2024-008",
+          "amount": 1111560.0,
+          "kind": "invoice"
+        },
+        {
+          "date": "2024-02-12",
+          "ref": "GCD-2024-008",
+          "amount": 1111560.0,
+          "kind": "payment"
+        },
+        {
+          "date": "2024-03-15",
+          "ref": "GCD-2024-014",
+          "amount": 1239000.0,
+          "kind": "invoice"
+        },
+        {
+          "date": "2024-03-22",
+          "ref": "GCD-2024-014",
+          "amount": 1239000.0,
+          "kind": "payment"
+        }
+      ],
+      "issued": 3424360.0,
+      "received": 3424360.0,
+      "closing": 0.0,
+      "file": "releve_groupe_q12024.pdf"
+    },
+    {
+      "supplier": "Groupe Comptoir de Dakar",
+      "period": "Q2 2024",
+      "start": "2024-04-01",
+      "end": "2024-06-30",
+      "lang": "fr",
+      "entries": [
+        {
+          "date": "2024-05-20",
+          "ref": "GCD-2024-021",
+          "amount": 1033680.0,
+          "kind": "invoice"
+        },
+        {
+          "date": "2024-05-28",
+          "ref": "GCD-2024-021",
+          "amount": 1033680.0,
+          "kind": "payment"
+        }
+      ],
+      "issued": 1033680.0,
+      "received": 1033680.0,
+      "closing": 0.0,
+      "file": "releve_groupe_q22024.pdf"
+    },
+    {
+      "supplier": "SENEXPORT SA",
+      "period": "Q2 2024",
+      "start": "2024-04-01",
+      "end": "2024-06-30",
+      "lang": "fr",
+      "entries": [
+        {
+          "date": "2024-04-14",
+          "ref": "SX-2024-018",
+          "amount": 1156400.0,
+          "kind": "invoice"
+        },
+        {
+          "date": "2024-04-22",
+          "ref": "SX-2024-018",
+          "amount": 1156400.0,
+          "kind": "payment"
+        }
+      ],
+      "issued": 1156400.0,
+      "received": 1156400.0,
+      "closing": 0.0,
+      "file": "releve_senexport_q22024.pdf"
+    },
+    {
+      "supplier": "SENEXPORT SA",
+      "period": "Q3 2024",
+      "start": "2024-07-01",
+      "end": "2024-09-30",
+      "lang": "fr",
+      "entries": [
+        {
+          "date": "2024-08-08",
+          "ref": "SX-2024-026",
+          "amount": 637200.0,
+          "kind": "invoice"
+        }
+      ],
+      "issued": 637200.0,
+      "received": 0,
+      "closing": 637200.0,
+      "file": "releve_senexport_q32024.pdf"
+    }
+  ],
+  "computed": {
+    "africatextiles_q1_2024_paid": {
+      "files": [
+        "invoice_AT-2024-0007.pdf",
+        "invoice_AT-2024-0012.pdf",
+        "invoice_AT-2024-0019.pdf"
+      ],
+      "total_paid": 31900.0
+    },
+    "africatextiles_q1_2024_issued": [
+      "invoice_AT-2024-0007.pdf",
+      "invoice_AT-2024-0012.pdf",
+      "invoice_AT-2024-0019.pdf",
+      "invoice_AT-2024-0027.pdf"
+    ],
+    "q1_2024_tva_total": 836100.0,
+    "q1_2024_tva_invoices": [
+      "facture_CF-2024-002.pdf",
+      "facture_CF-2024-009.pdf",
+      "facture_GCD-2024-001.pdf",
+      "facture_GCD-2024-008.pdf",
+      "facture_GCD-2024-014.pdf",
+      "facture_SX-2024-003.pdf",
+      "facture_SX-2024-011.pdf"
+    ],
+    "unpaid_invoices": [
+      "invoice_AT-2024-0060.pdf",
+      "facture_CF-2024-017.pdf",
+      "facture_CF-2024-024.pdf",
+      "facture_GCD-2024-030.pdf",
+      "facture_GCD-2024-046.pdf",
+      "invoice_IF-2024-029.pdf",
+      "facture_SX-2024-026.pdf",
+      "facture_SX-2024-035.pdf"
+    ],
+    "unpaid_total_fcfa": 4605540.0,
+    "unpaid_total_usd": 12673.0,
+    "receipts_over_100k": [
+      {
+        "file": "recu_RCP-2024-011.pdf",
+        "amount": 125000,
+        "code": "RCP-2024-011"
+      },
+      {
+        "file": "receipt_RCP-2024-015.pdf",
+        "amount": 110000,
+        "code": "RCP-2024-015"
+      },
+      {
+        "file": "recu_RCP-2024-023.pdf",
+        "amount": 150000,
+        "code": "RCP-2024-023"
+      },
+      {
+        "file": "recu_RCP-2024-031.pdf",
+        "amount": 240000,
+        "code": "RCP-2024-031"
+      }
+    ],
+    "receipts_over_100k_total": 625000,
+    "q2_2024_paid_by_supplier": {
+      "AfricaTextiles Ltd": {
+        "files": [
+          "invoice_AT-2024-0027.pdf",
+          "invoice_AT-2024-0041.pdf"
+        ],
+        "total": 21112.0,
+        "currency": "USD"
+      },
+      "Groupe Comptoir de Dakar": {
+        "files": [
+          "facture_GCD-2024-021.pdf"
+        ],
+        "total": 1033680.0,
+        "currency": "XOF"
+      },
+      "SENEXPORT SA": {
+        "files": [
+          "facture_SX-2024-018.pdf"
+        ],
+        "total": 1156400.0,
+        "currency": "XOF"
+      }
+    },
+    "q3_2024_issued_invoices": [
+      "invoice_AF-2024-006.png",
+      "facture_GCD-2024-030.pdf",
+      "facture_GCD-2024-038.pdf",
+      "invoice_IF-2024-016.pdf",
+      "invoice_LTM-2024-011.png",
+      "facture_SX-2024-026.pdf",
+      "facture_TP-2024-020.png",
+      "invoice_WH-2024-013.pdf"
+    ],
+    "q3_2024_issued_total_fcfa": 2952950.0,
+    "q3_2024_issued_total_usd": 14012.8,
+    "june_2024_issued_invoices": [
+      "facture_ACM-2024-007.png",
+      "invoice_AT-2024-0041.pdf",
+      "facture_CF-2024-017.pdf"
+    ],
+    "total_receipts_2024": 1363000,
+    "total_2024_spend_by_supplier": {
+      "AfricaTextiles Ltd": 60204.0,
+      "Ashanti Fabrics": 2146.0,
+      "Atelier Cousu-Main": 672600.0,
+      "Cotonou Fabrics SARL": 1994200.0,
+      "Groupe Comptoir de Dakar": 7625750.0,
+      "IndoFab Textiles": 18542.6,
+      "Lagos Textile Mart": 2679.6,
+      "SENEXPORT SA": 3776000.0,
+      "Tissus du Plateau SARL": 1044300.0,
+      "TransExpress Sénégal": 1003000.0,
+      "WeaveHouse Ghana Ltd": 12487.4
+    },
+    "total_2024_senexport": 3776000.0,
+    "total_2024_gcd": 7625750.0
+  }
+}

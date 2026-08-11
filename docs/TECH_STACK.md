@@ -1,231 +1,101 @@
 # Technology Stack — Decisions & Rationale
 
-Every choice in Karatasi is driven by one constraint: **must run offline on an 8GB RAM laptop**. This document explains why each technology was chosen and what the alternatives were.
+Every choice in SME Brief is driven by two constraints: **must run fully offline** and **must fit on an 8GB RAM laptop** (CPU-only inference). The domain adds a third: the corpus and questions are **bilingual (French + English)**. This document explains why each technology was chosen and what the alternatives were.
 
 ---
 
-## Image Processing
+## Embeddings
 
-**Chosen**: OpenCV (cv2) via opencv-python-headless
-**Alternative**: PIL/Pillow, scikit-image
+**Chosen**: multilingual-e5-small (SentenceTransformer)
+**Alternatives**: all-MiniLM-L6-v2, BGE-m3, multilingual-e5-large, cloud embedding APIs
 
-OpenCV is the standard for document image processing. It's fast (C++ backend with Python bindings), memory-efficient (~100MB resident), and has every preprocessing function we need built in. PIL is simpler but lacks advanced deskew, adaptive thresholding, and morphological operations.
+multilingual-e5-small produces 384-dimensional vectors and covers 100+ languages — including both French and English, the two languages of the corpus and of user questions. Multilingual capability is the whole point: a query in French must retrieve chunks written in either language, so an English-only model is disqualified from the start.
 
-```
-Key OpenCV functions used:
-- cv2.adaptiveThreshold() — binarization for varied lighting
-- cv2.getRotationMatrix2D() + warpAffine() — deskew
-- cv2.morphologyEx() — close gaps, remove noise
-- cv2.findContours() — layout detection
-```
+e5 models recommend prefixing inputs — passages with `"passage: "`, queries with `"query: "` — which measurably improves retrieval quality and is implemented in `src/embeddings.py`. The storage layer is prefix-agnostic: it stores plain float vectors, so the prefix policy can change without a schema change.
 
----
-
-## OCR — Printed Text
-
-**Chosen**: Tesseract 5 (pytesseract, via opencv-python-headless)
-**Alternative**: EasyOCR, PaddleOCR, Surya
-
-Tesseract is the only mature, offline, open-source OCR engine with Swahili language support. EasyOCR and PaddleOCR are more accurate for handwriting but are 2-3x heavier (GPU-dependent). Surya is more modern but requires significant VRAM.
-
-| Feature | Tesseract | EasyOCR | PaddleOCR | Surya |
+| Option | Offline | FR+EN | RAM | Verdict |
 |---|---|---|---|---|
-| Offline | ✅ | ✅ | ✅ | ✅ |
-| Swahili support | ✅ (Latin script, `-l eng`) | ❌ | ❌ | ❌ |
-| RAM usage | ~150MB | ~800MB | ~1GB | ~2GB |
-| Speed (full page) | ~11s on CPU | Very slow | Medium | Slow |
-| Handwriting | Poor | Good | Medium | Good |
+| multilingual-e5-small | ✅ | ✅ | ~0.3GB | **Chosen** — right size, right languages |
+| all-MiniLM-L6-v2 | ✅ | ❌ English-only | ~0.1GB | Used pre-pivot; cannot answer FR queries |
+| multilingual-e5-large | ✅ | ✅ | ~1.5GB | Better quality, but 5× the RAM for marginal gains at this corpus size |
+| BGE-m3 | ✅ | ✅ | ~2GB+ | Heavy; overkill for an 8GB laptop |
+| OpenAI text-embedding-3 | ❌ cloud | ✅ | — | Violates the offline constraint |
 
-Tesseract wins for our use case because most form *labels* are printed (clear, consistent font). 97% of pipeline time is Tesseract — it is the dominant bottleneck.
-
-**Swahili note**: Standard Tesseract distributions lack `swk` (Swahili) traineddata. Swahili uses Latin script, so the English model (`-l eng`) handles it with acceptable accuracy. A dedicated Swahili traineddata file would improve accuracy for Swahili-specific letters but is not available.
+The model is loaded with `local_files_only=True` and cached in a process-wide singleton (`lru_cache`), so the ingest pipeline and the query router never double-load it.
 
 ---
 
-## OCR — Handwritten Text
+## Vector Storage
 
-**Chosen**: TrOCR (microsoft/trocr-base-handwritten)
-**Alternative**: TrOCR small, TrOCR large, PaddleOCR handwriting, No handwriting support
+**Chosen**: SQLite + sqlite-vec
+**Alternatives**: ChromaDB, FAISS, Postgres/pgvector
 
-TrOCR is a transformer-based handwriting recognition model (~330M parameters, ~300MB checkpoint). It's designed for single-line text recognition from cropped images. We crop handwritten fields using layout detection, then run TrOCR on each field individually.
+The knowledge base is **one SQLite file** (`data/smebrief.db`): structured financial rows, chunk text, and float32 embeddings coexist, with cosine kNN provided by the `vec_chunks` `vec0` virtual table. This is a deliberate "no daemon" design — nothing to keep alive, nothing to configure, single ACID file that can be copied, backed up, or shipped with the demo.
 
-```
-Model: microsoft/trocr-base-handwritten
-Size: ~300MB (PyTorch checkpoint)
-Accuracy on English handwriting: ~80% (short phrases)
-RAM usage: ~1.5GB (PyTorch weights + runtime overhead)
-Inference speed: ~5s per field region on CPU (14 fields → ~70s)
-```
+| Option | Offline | Deamon | ACID | Scale note | Verdict |
+|---|---|---|---|---|---|
+| SQLite + sqlite-vec | ✅ | none | ✅ | fine to 100k+ chunks | **Chosen** |
+| ChromaDB | ✅ | separate store | partial | fine | Original choice; still in requirements.txt but **unused** — heavier, no benefit at this scale |
+| FAISS | ✅ | none | ❌ (in-memory) | excellent | Dropped in the pivot; needs manual persistence plumbing |
+| Postgres/pgvector | ❌ server | yes | ✅ | excellent | Production-grade, but a server is the wrong shape for an offline laptop |
 
-**Disabled by default**: TrOCR reads form labels as "handwriting" on blank forms, producing garbage. A printed-text filter (cross-references output against Tesseract full-page text) and ink-ratio guard (<1% dark pixels → skip) mitigate this. Enable with `use_trocr=True`.
-
-**Memory note**: While the model checkpoint is ~300MB, PyTorch adds significant runtime overhead (~1.2GB). Total TrOCR memory footprint is ~1.5GB when loaded.
-
-**Why not a vision-language model (VLM)?**
-VLMs like LLaVA, Qwen-VL, or CogVLM can read handwriting in context but are 7B+ parameters and won't fit in 8GB alongside the rest of the pipeline. The staged approach (crop → TrOCR) is more memory-efficient.
-
-**Why not PaddleOCR?**
-PaddleOCR's handwriting recognition module requires GPU for acceptable speed and has no Swahili support.
+The `FinanceStore` class is the swappable seam: the same schema and method surface ports to Postgres/pgvector if the corpus ever outgrows SQLite. At the current corpus (60 documents, ~82 chunks) and even at 100k+ chunks, SQLite is more than sufficient.
 
 ---
 
-## LLM — Form Understanding
+## LLM
 
-**Chosen**: Qwen2.5-1.5B (Q4_K_M quantization via llama.cpp)
-**Alternative**: Phi-3-mini, Gemma-2-2B, Llama 3.2-1B/3B
+**Chosen**: Qwen2.5-1.5B-Instruct Q4_K_M (GGUF) via llama-cpp-python
+**Alternatives**: Phi-3-mini, Llama-3.2-1B, larger GGUF quants, cloud APIs
 
-| Model | Parameters | Quantized Size | RAM Usage | Form Parsing Quality |
+The LLM answers only the *semantic* questions (summaries, clause descriptions — 4 of 50 gold questions); money questions are deterministic SQL and never touch the model. So the requirement is: good enough French/English instruction-following inside an 8GB budget, not frontier quality.
+
+`LLMServer` (`src/llm/serve.py`) loads the Q4_K_M GGUF CPU-only (`n_gpu_layers=0`) with a 4096-token context (RAG context + answer), temperature 0.1 for deterministic output, lazy-load on first inference, memory-mapping, and a 300-second idle unload that frees the ~1GB when unused.
+
+| Option | RAM | Offline | FR | Verdict |
 |---|---|---|---|---|
-| **Qwen2.5-1.5B** | 1.5B | ~1.1 GB | ~2.5 GB | Good |
-| Llama 3.2-1B | 1B | ~700 MB | ~1.5 GB | Acceptable |
-| Gemma-2-2B | 2B | ~1.3 GB | ~2.5 GB | Good |
-| Phi-3-mini | 3.8B | ~2.5 GB | ~3.5 GB | Very good |
-| Llama 3.1-8B | 8B | ~5.5 GB | ~6.5 GB | Excellent ❌ won't fit |
-
-**Why Qwen2.5-1.5B?**
-Balanced tradeoff between quality and RAM. 1.5B parameters is sufficient for the structured task of form understanding (classifying form type + extracting fields from clean OCR text).
-
-Phi-3-mini would be more accurate but uses 2x the RAM. In the challenge scoring formula (accuracy/efficiency), the 1.5B model scores higher because its efficiency gain outweighs its accuracy loss.
-
-**Disabled by default**: The 1.5B model takes 45-85s per inference and hallucinates values on blank forms (e.g., "1990-01-01" for a blank date field). Keyword detection + template fallback is faster (<10ms), deterministic, and more reliable for known form types. The LLM is kept as an optional enhancement (`use_llm=True`) for ambiguous cases.
-
-**Why llama.cpp?**
-llama.cpp is the most mature CPU-inference engine for quantized LLMs. It uses memory-mapped model files (mmap) to keep the model on disk until needed, supports Q4_K_M quantization (optimal quality/size tradeoff), and has stable Python bindings (llama-cpp-python).
-
-```
-Inference parameters:
-- Temperature: 0.1 (deterministic for extraction)
-- top_p: 0.9
-- max_tokens: 512 (field extraction), 128 (form type)
-- context length: 2048
-- batch size: 512
-```
-
-**Prompt format** (shortened for 1.5B model):
-- System prompt: Kenyan government clerk persona (English + Swahili)
-- Form type: 5 one-line examples + JSON format instruction
-- Field extraction: OCR text + known labels + "return JSON array only"
-- JSON parsing: robust against markdown fences, leading/trailing text
+| Qwen2.5-1.5B-Instruct Q4_K_M | ~1GB | ✅ | ✅ | **Chosen** — best quality-per-GB for the budget |
+| Phi-3-mini (3.8B) | ~2.5GB | ✅ | weak | Too heavy with embeddings loaded, weaker French |
+| Llama-3.2-1B | ~0.9GB | ✅ | weak | Comparable size, noticeably worse French/instruction following |
+| Cloud LLM APIs | — | ❌ | ✅ | Violates the offline constraint |
 
 ---
 
-## Vector Store
+## Text Extraction
 
-**Chosen**: FAISS (in-memory) — **not yet implemented**
-**Alternative**: ChromaDB, SQLite, None
+**Chosen**: PyMuPDF (fitz) for PDFs, Tesseract (via pytesseract) for scanned PNGs
+**Alternatives**: pdfplumber/pdfminer, EasyOCR, PaddleOCR
 
-FAISS is planned for form template similarity matching — when a form doesn't match any known template exactly, we find the closest match via embedding similarity. The all-MiniLM-L6-v2 sentence transformer download was interrupted (timeout) and this feature is deferred to Week 3.
+Ingest needs per-page text for two document shapes: generated PDFs (a clean text layer) and scanned PNGs (pixel images).
 
-```
-Index: FlatL2 (brute-force cosine similarity)
-Dimension: 384 (all-MiniLM-L6-v2 embeddings)
-Size: ~150 MB for template storage
-```
+- **PyMuPDF** reads the PDF text layer directly — fast, precise page splits, no OCR needed for the majority of the corpus.
+- **Tesseract** handles the scanned PNGs. The binary is **bundled inside the repo venv** (`venv/bin/tesseract`), so there is no system-install prerequisite; `extract_image_text` pins `LD_LIBRARY_PATH` and `TESSDATA_PREFIX` to the venv so the bundled binary resolves its libraries and `eng.traineddata`. Heavier alternatives (EasyOCR/PaddleOCR) are GPU-oriented and overkill for clean generated scans.
 
----
-
-## UI Framework
-
-**Chosen**: Streamlit — **not yet built**
-**Alternative**: React + FastAPI, Gradio, Tkinter
-
-| Feature | Streamlit | React + FastAPI | Gradio | Tkinter |
+| Option | Speed | Offline | Notes | Verdict |
 |---|---|---|---|---|
-| Single process | ✅ | ❌ (2 processes) | ✅ | ✅ |
-| RAM overhead | ~100MB | ~400MB (2 runtimes) | ~200MB | ~50MB |
-| Development speed | Fast | Slow | Fast | Slow |
-| Visual polish | Good | Excellent | Good | Poor |
-| Offline packaging | pip | Docker needed | pip | Built-in |
-
-Streamlit wins for a hackathon: single Python process, no build step, no Docker. The trade-off is less visual flexibility, but for a demo that judges need to run, "it just works" is more important than pixel perfection.
+| PyMuPDF | instant | ✅ | direct text layer | **Chosen** for PDFs |
+| Tesseract (bundled) | fast | ✅ | no system install | **Chosen** for scans |
+| pdfplumber/pdfminer | slower | ✅ | more deps, same result | Not needed |
+| EasyOCR/PaddleOCR | slow on CPU | ✅ | GPU-oriented, heavy | Overkill |
 
 ---
 
-## PDF Export
+## Storage Engine
 
-**Chosen**: ReportLab + PyMuPDF (fitz) — **not yet built**
-**Alternative**: pdfkit, FPDF, pdf-lib (JS)
-
-ReportLab generates PDFs from scratch (for filled digital copies). PyMuPDF reads and overlays text onto existing PDF forms. Together they cover all export cases.
-
-```
-Workflow:
-1. PyMuPDF reads original form PDF → gets page dimensions
-2. Coordinates from layout detection map to PDF coordinates
-3. ReportLab/PyMuPDF overlays extracted text at correct positions
-4. Output: filled_form.pdf
-```
+SQLite, single file, ACID (`PRAGMA foreign_keys = ON`, `ON DELETE CASCADE`). The alternative is a client-server database, which fails the "ordinary laptop, zero setup, demo-reliable" test. `db.py` owns the schema; `store.py` owns the typed access layer; the ingest pipeline, query router, and eval harness all build against `FinanceStore` — one seam to swap if the target becomes server-scale.
 
 ---
 
-## Swahili Language Support
+## Summary
 
-**How it works** (no separate translation model needed):
+| Layer | Chosen | Why |
+|---|---|---|
+| Embeddings | multilingual-e5-small | 384-dim, FR+EN, offline |
+| Vector store | SQLite + sqlite-vec | one file, no daemon, ACID |
+| LLM | Qwen2.5-1.5B Q4_K_M (llama.cpp) | ~1GB, CPU-only, bilingual |
+| PDF text | PyMuPDF | fast text-layer extraction |
+| Scanned OCR | Tesseract (venv-bundled) | offline, zero system install |
 
-1. **Field labels**: Inline translations in `FieldSchema` — each field has `label_en` and `label_sw`
-2. **LLM output**: System prompt tells Qwen2.5 to output field labels in the user's selected language. Qwen2.5's training data includes Swahili.
-3. **OCR**: Tesseract configured with `-l eng` (the standard distribution lacks Swahili .traineddata, but Swahili uses Latin script, so the English model handles it)
-4. **UI text**: Planned `src/ui/strings.py` — all UI strings stored in English + Swahili, toggled by session state (Week 3)
+## Dropped in the Pivot
 
-This avoids adding a translation model (extra RAM) while still delivering a functional bilingual experience.
-
----
-
-## Dependency Summary
-
-```
-Core:
-├── opencv-python-headless == 4.9.*   # Image preprocessing
-├── pytesseract == 0.3.*              # Typed OCR
-├── torch == 2.2.*                    # TrOCR inference (CPU)
-├── transformers == 4.40.*            # TrOCR model loading
-├── sentencepiece == 0.2.*            # Tokenizer (TrOCR)
-├── protobuf == 5.26.*                # Serialization (TrOCR)
-├── llama-cpp-python == 0.2.*         # LLM inference
-├── streamlit == 1.35.*               # UI (Week 3)
-├── faiss-cpu == 1.8.*                # Template similarity (Week 3)
-├── sentence-transformers == 2.7.*    # Embeddings (Week 3)
-├── PyMuPDF == 1.24.*                 # PDF read/manipulate (Week 3)
-├── reportlab == 4.1.*                # PDF generation (Week 3)
-├── Pillow == 10.3.*                  # Image handling
-├── numpy == 1.26.*                   # Numerical ops
-└── pydantic == 2.7.*                 # Data validation
-
-System:
-└── tesseract-ocr >= 5.0              # OCR engine
-```
-
-Total `pip install` size: ~2.5GB (includes torch CPU, which is the heaviest dependency at ~1.2GB).
-
----
-
-## Memory Profile by Pipeline Mode
-
-| Mode | Components | Total RAM | Status |
-|---|---|---|---|
-| **Fast path** | OpenCV + Tesseract + keyword detection | ~500MB | ✅ Default |
-| + TrOCR | + PyTorch + TrOCR model | ~2GB | ⚠️ ~70s on CPU |
-| + LLM | + Qwen2.5 GGUF (mmapped) | ~3GB | ⚠️ ~45-85s inference |
-| **Full** | All of the above | ~5.5-6.5GB | ⚠️ Risk of swap |
-
----
-
-## Why Not...
-
-### Why not use a larger model and rely on swap?
-Swap memory on an 8GB laptop means hitting disk. A single inference would take 30+ seconds. The challenge scores on speed and memory — swap disqualifies you.
-
-### Why not use ONNX Runtime?
-ONNX is faster for inference but adds complexity to model conversion. llama.cpp directly consumes popular GGUF models without conversion. For a 4-week build, simplicity wins.
-
-### Why not Docker?
-Docker adds ~1GB overhead and requires root or docker group membership. A clean `pip install` + system install of Tesseract is simpler for judges to run on their own machines.
-
-### Why not a multilingual model instead of separate Swahili support?
-Qwen2.5 already handles Swahili. The planned language strings file is only for UI labels — the LLM handles content-level translation.
-
-### Why is form type detection keyword-based instead of LLM?
-Keyword matching achieves 100% accuracy in <10ms with zero model overhead. The 1.5B LLM takes 45-85s and fails to follow JSON-only formatting instructions. For deterministic structured tasks on known government form patterns, keyword matching is superior in every dimension.
-
-### Why are TrOCR and LLM disabled by default?
-TrOCR takes ~70s for 14 field regions and produces garbage on blank forms. The LLM hallucinates values on blank forms. The fast path (Tesseract + keywords + templates) completes in 11.4s with deterministic, correct output. Users explicitly enable AI models when processing filled forms.
+The project originally shipped as "Karatasi" (OCR form extraction) and pivoted to RAG QA. Dropped with it: **TrOCR** (handwriting — no handwriting in the new domain), **reportlab** (PDF overlay export), **FAISS** (replaced by sqlite-vec), **torchvision/transformers/sentencepiece** (TrOCR stack). A few legacy deps remain in `requirements.txt` unused — `chromadb` and `streamlit` (kept for an optional UI later) — and should not be mistaken for active parts of the pipeline. Actual resident memory today: ~1.5–2GB (LLM ~1GB + embeddings model), well inside the 8GB budget.

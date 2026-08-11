@@ -1,61 +1,70 @@
-# Karatasi — Offline AI Document Processor for Kenyan Government Forms
+# SME Brief — Offline Local RAG for African SMEs
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Offline](https://img.shields.io/badge/Runs-Offline%20%7C%208GB%20Laptop-success)](https://adtc-2026.devpost.com/)
 
-**Karatasi** (Swahili for "paper") — an offline AI document processor that understands Kenyan government forms, extracts handwritten and typed fields, and auto-fills them. Built for the **Africa Deep Tech Challenge 2026** ("The Laptop LLM Challenge" — AI that runs on 8GB RAM laptops, offline).
+**SME Brief** is an offline retrieval-augmented generation (RAG) system that answers business questions about a small company's own documents — in French or English — with cited sources. Built for the **Africa Deep Tech Challenge 2026** ("The Laptop LLM Challenge" — AI that runs on 8GB RAM laptops, fully offline).
 
 ```
-Upload a scanned ID application form → AI detects the form type,
-extracts all fields (including handwriting), and presents an editable
-filled copy — all on a laptop with no internet connection.
+"Combien de factures sont impayées ?"      "What was invoice AT-2024-0007?"
+        │                                          │
+        ▼                                          ▼
+   ┌─────────────────────────────────────────────────────┐
+   │  QueryRouter → SQL intents  OR  semantic RAG (LLM)  │
+   │  over a single-file SQLite store (documents + vec)  │
+   └─────────────────────────────────────────────────────┘
+        │                                          │
+        ▼                                          ▼
+   "3 factures"                            "8,120.00 USD"
+   files: [facture_…, …]                   files: [invoice_AT-2024-0007.pdf]
 ```
 
 ---
 
-## Why Karatasi?
+## Why SME Brief?
 
-Every Kenyan has filled out a government form with a pen at a crowded office desk only to be told "come back tomorrow" because of an error. Forms get rejected for bad handwriting, missing fields, or illegible copies. Internet-based solutions don't help — most Kenyans access government services from cybercafés or local offices with unreliable connectivity.
+Small businesses keep their books in invoices, receipts, contracts, and bank statements — almost always in their local language(s), almost never in a tidy database. Answering "how much did we pay Groupe Comptoir last quarter?" means hunting through a pile of PDFs and scans. Cloud AI assistants can't help: most SMEs in West Africa work from cybercafés and local offices with unreliable connectivity.
 
-Karatasi runs entirely offline on an ordinary 8GB laptop:
-- **Upload** — Scan or photo of any government form (ID application, KRA PIN, land board, birth certificate); supports multipage PDFs
-- **Understand** — AI detects the form type, reads printed labels with Tesseract OCR, reads handwritten content with TrOCR
-- **Auto-fill** — Extracted fields appear in an editable interface in English or Swahili
-- **Quality checks** — Auto-rotate, blur detection, non-form warnings keep results reliable
-- **Export** — Download a filled PDF or structured JSON
+SME Brief runs entirely offline on an ordinary 8GB laptop:
+
+- **Bilingual** — ask in French or English, get an answer in the same language
+- **Hybrid answering** — money questions are answered by *deterministic SQL* over structured rows (never LLM-guessed), open questions by semantic RAG
+- **Cited answers** — every answer names the source document(s) and page
+- **Gold eval suite** — 50 question/answer pairs score the router (currently 50/50)
+- **Fully offline** — models load with `local_files_only=True`; one SQLite file holds the whole knowledge base; no daemon, no cloud, no API keys
+
+**Memory footprint**: ~1.5–2GB (Qwen2.5-1.5B ~1GB + multilingual-e5-small) — comfortably inside the 8GB budget.
 
 ## Project Status
 
-**Active development** — built for the Africa Deep Tech Challenge 2026 (deadline: Aug 24–25, 2026).
+**Active development** — Africa Deep Tech Challenge 2026 (deadline: Aug 24–25, 2026).
 
-| Milestone | Target | Status |
-|---|---|---|---|
-| OCR pipeline (typed + handwriting) | Week 1 (Jul 29 – Aug 4) | ✅ Complete |
-| Form understanding + LLM integration | Week 2 (Aug 5 – 11) | ✅ Complete |
-| Streamlit UI + Swahili support + Export | Week 3 (Aug 12 – 18) | ✅ Complete |
-| Polish, demo, submission | Week 4 (Aug 19 – 25) | ✅ In progress |
+| Milestone | Window | Status |
+|---|---|---|
+| OCR/extraction pipeline (original "Karatasi" direction) | Weeks 1–2 | ✅ Built, then replaced by the pivot |
+| Pivot to offline RAG QA — generator, ingest, store, router | Week 3 | ✅ Complete |
+| Gold-QA eval harness — 50/50 passing | Week 3 | ✅ Complete |
+| Semantic answers (retriever + context + LLM) wired in | Week 3 | ✅ Complete |
+| Polish, demo, submission | Week 4 (Aug 19 – 25) | ⏳ In progress |
 
 ## Tech Stack
 
 | Layer | Technology | Purpose |
 |---|---|---|
-| Image Processing | OpenCV | Deskew, denoise, binarize, layout detection |
-| Typed OCR | Tesseract (pytesseract) | Printed label and text recognition |
-| Handwriting OCR | TrOCR (Microsoft) | Handwritten field content recognition |
-| LLM | Qwen2.5-1.5B-Q4_K_M (llama.cpp) | Form type identification, field extraction, structuring |
-| UI | Streamlit | Self-contained web interface |
-| PDF Export | PyMuPDF | Overlay text onto original scanned form |
-
-**Memory footprint**: ~4-5GB (comfortably fits in 8GB budget)
+| Embeddings | multilingual-e5-small (SentenceTransformer) | 384-dim bilingual (FR/EN) passage & query vectors |
+| Vector store | SQLite + sqlite-vec | Single-file cosine kNN (`vec_chunks` virtual table) |
+| Structured store | SQLite | Deterministic SQL over invoices, receipts, contracts, statements |
+| LLM | Qwen2.5-1.5B-Instruct Q4_K_M (llama.cpp) | Semantic answer generation, CPU-only, ~1GB |
+| PDF text | PyMuPDF | Per-page text extraction at ingest |
+| Scanned OCR | Tesseract (bundled in venv) | Text extraction for scanned PNG documents |
 
 ## Quick Start
 
 ```bash
-# Prerequisites: Python 3.11, Tesseract OCR installed
+# Prerequisites: Python 3.11
 
-git clone https://github.com/kish-00/karatasi
-cd karatasi
+cd smebrief
 
 # Create virtual environment
 python -m venv venv
@@ -64,46 +73,59 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Download models (script downloads quantized LLM + TrOCR)
+# Download models (Qwen2.5-1.5B GGUF + multilingual-e5-small)
 python scripts/download_models.py
 
-# Run the app
-streamlit run src/app.py
-```
+# 1) Regenerate the synthetic corpus (manifest + gold QA + documents)
+venv/bin/python data/synthetic/generator.py
 
-Open [http://localhost:8501](http://localhost:8501)
+# 2) Build the knowledge base (data/smebrief.db)
+venv/bin/python -m src.ingest --force
+
+# 3) Verify against the gold suite (expect PASS 50/50, exit 0)
+venv/bin/python eval/run_eval.py
+
+# 4) Ask a question
+venv/bin/python -c "
+from src.storage.store import get_store
+from src.retrieval.router import QueryRouter
+ans = QueryRouter(get_store()).answer('Combien de factures sont impayées ?')
+print(ans.text)
+print(ans.files)
+print(ans.route)
+"
+```
 
 ## Project Structure
 
 ```
-karatasi/
+smebrief/
 ├── docs/
 │   ├── ARCHITECTURE.md      # System architecture & data flow
-│   ├── BUILD_PLAN.md         # Week-by-week build plan
-│   └── TECH_STACK.md         # Technology decisions & rationale
+│   ├── BUILD_PLAN.md         # Build history (incl. pivot) + remaining work
+│   ├── TECH_STACK.md         # Technology decisions & rationale
+│   └── CONTINUATION_PROMPT.md# Session handoff notes
 ├── scripts/
-│   └── download_models.py   # Model download script
+│   └── download_models.py   # Qwen GGUF + multilingual-e5-small
+├── data/
+│   ├── synthetic/
+│   │   ├── generator.py     # Corpus generator (manifest + gold QA + documents)
+│   │   ├── manifest.json    # Single source of truth (60 docs)
+│   │   ├── gold_qa.json     # 50 gold questions with answers
+│   │   └── documents/       # Generated PDFs + scanned PNGs (gitignored)
+│   └── smebrief.db          # SQLite store, built by ingest (gitignored)
+├── eval/
+│   └── run_eval.py          # 50/50 gold-QA harness
 ├── src/
-│   ├── app.py               # Streamlit entry point
-│   ├── ocr/
-│   │   ├── preprocess.py    # OpenCV image preprocessing + layout detection
-│   │   ├── typed.py         # Tesseract OCR for printed text
-│   │   └── handwriting.py   # TrOCR for handwritten text
-│   ├── forms/
-│   │   ├── detector.py      # Form type identification
-│   │   ├── fields.py        # Field extraction schemas + validation
-│   │   └── templates/       # Form template definitions
-│   ├── llm/
-│   │   ├── serve.py         # llama.cpp model serving
-│   │   └── prompts.py       # Prompt templates
-│   ├── ui/
-│   │   ├── components.py    # Streamlit UI components (editable fields, export)
-│   │   └── strings.py       # English + Swahili UI strings
-│   └── export/
-│       ├── pdf.py           # PDF overlay via PyMuPDF
-│       └── json_export.py   # Structured JSON export
-├── models/                  # Downloaded model files (gitignored)
-├── samples/                 # Sample forms for testing
+│   ├── embeddings.py        # multilingual-e5-small helpers (offline)
+│   ├── ingest/              # Corpus → store (extract, chunk, embed)
+│   ├── llm/                 # llama.cpp server (lazy load, idle unload)
+│   ├── ocr/                 # Legacy extraction (preprocess.py, typed.py)
+│   ├── rag/                 # Retriever, context builder, LLM answers
+│   ├── retrieval/           # QueryRouter — SQL intents + semantic fallback
+│   └── storage/             # SQLite schema + FinanceStore
+├── models/                  # Downloaded models (gitignored)
+├── samples/                 # Sample documents
 ├── requirements.txt
 └── README.md
 ```

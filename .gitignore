@@ -9,7 +9,12 @@ venv/
 models/
 *.gguf
 
-# Uploaded forms (runtime)
+# Runtime vector store + generated data
+data/chroma/
+data/synthetic/documents/
+data/smebrief.db
+
+# Uploaded documents (runtime)
 uploads/
 !uploads/.gitkeep
 

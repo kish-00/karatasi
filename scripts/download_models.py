@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-Model download script for Karatasi.
+Model download script for SME Brief.
 
 Downloads:
-1. Qwen2.5-1.5B-Q4_K_M GGUF — form understanding LLM
-2. TrOCR base handwritten — handwriting OCR
-3. all-MiniLM-L6-v2 — embeddings for template matching
+1. Qwen2.5-1.5B-Instruct Q4_K_M GGUF — semantic answer LLM
+2. multilingual-e5-small — FR/EN embeddings (384-dim, offline)
+
+The embedding model is saved as models/multilingual-e5-small (the plain
+name, matching src/embeddings.py's MODEL_DIR — not the HF hub "--" form).
 
 Usage:
     python scripts/download_models.py
@@ -52,37 +54,17 @@ def download_gguf(url: str, dest: Path) -> None:
     print(f"     Size: {dest.stat().st_size / 1e9:.2f} GB")
 
 
-def download_hf_model(model_id: str, subfolder: str = "") -> None:
-    """Download a HuggingFace model to local directory."""
-    from huggingface_hub import snapshot_download
-
-    dest = MODELS_DIR / model_id.replace("/", "--")
-    if dest.exists():
-        print(f"  ✅ {model_id} already exists at {dest}, skipping")
-        return
-
-    print(f"  ⬇️  Downloading {model_id}...")
-    snapshot_download(
-        repo_id=model_id,
-        local_dir=dest,
-        allow_patterns=["*.json", "*.safetensors", "*.model", "*.bin"],
-        ignore_patterns=["*.h5", "*.ot", "*.msgpack"],
-    )
-    print(f"     Saved to: {dest}")
-
-
 def main():
     MODELS_DIR.mkdir(exist_ok=True)
 
     print("=" * 60)
-    print("Karatasi — Downloading Models")
+    print("SME Brief — Downloading Models")
     print("=" * 60)
     print(f"Models directory: {MODELS_DIR}")
     print()
 
-    # 1. LLM for form understanding (Qwen2.5-1.5B GGUF, Q4_K_M)
     # Using HuggingFace hub for GGUF models
-    print("[1/3] Form Understanding LLM (Qwen2.5-1.5B-Q4_K_M)")
+    print("[1/2] Answer LLM (Qwen2.5-1.5B-Instruct Q4_K_M)")
     llm_url = (
         "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/"
         "qwen2.5-1.5b-instruct-q4_k_m.gguf"
@@ -91,22 +73,30 @@ def main():
     download_gguf(llm_url, llm_dest)
     print()
 
-    # 2. TrOCR for handwriting recognition
-    print("[2/3] Handwriting OCR (TrOCR base)")
-    download_hf_model("microsoft/trocr-base-handwritten")
-    print()
-
-    # 3. Sentence transformer for embeddings
-    print("[3/3] Embeddings (all-MiniLM-L6-v2)")
-    download_hf_model("sentence-transformers/all-MiniLM-L6-v2")
+    print("[2/2] Embeddings (multilingual-e5-small)")
+    e5_dest = MODELS_DIR / "multilingual-e5-small"
+    if e5_dest.exists():
+        print(f"  ✅ multilingual-e5-small already exists at {e5_dest}, skipping")
+    else:
+        print(f"  ⬇️  Downloading multilingual-e5-small...")
+        from huggingface_hub import snapshot_download
+        snapshot_download(
+            repo_id="intfloat/multilingual-e5-small",
+            local_dir=e5_dest,
+            allow_patterns=["*.json", "*.safetensors", "*.model", "*.bin", "*.txt"],
+            ignore_patterns=["*.h5", "*.ot", "*.msgpack"],
+        )
+        print(f"     Saved to: {e5_dest}")
     print()
 
     print("=" * 60)
     print("All models downloaded!")
-    print(f"Total models size: ~1.5 GB")
+    print(f"Total models size: ~1.2 GB")
     print()
-    print("Run the app:")
-    print("  streamlit run src/app.py")
+    print("Next steps:")
+    print("  venv/bin/python data/synthetic/generator.py   # regenerate corpus")
+    print("  venv/bin/python -m src.ingest --force          # build data/smebrief.db")
+    print("  venv/bin/python eval/run_eval.py               # expect PASS 50/50")
     print("=" * 60)
 
 
