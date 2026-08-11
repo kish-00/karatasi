@@ -34,7 +34,7 @@ The original Karatasi direction, built and then replaced:
 - [x] PDF export via PyMuPDF overlay (filled text, signature/photo crops)
 - [x] Streamlit UI with editable fields, preview, color-coded regions, Swahili strings
 
-**Fate**: the pivot deleted the app modules (`src/app.py`, `src/export/`, `src/forms/`, `src/pipeline.py`, `src/ui/`, `src/ocr/handwriting.py`). Only `src/ocr/preprocess.py` and `src/ocr/typed.py` survive, as legacy code outside the RAG answer path.
+**Fate**: the pivot deleted the app modules (`src/app.py`, `src/export/`, `src/forms/`, `src/pipeline.py`, `src/ui/`, `src/ocr/handwriting.py`). The surviving OCR files (`src/ocr/preprocess.py`, `src/ocr/typed.py`) were moved to `archive/ocr/` in Week 4 as legacy reference code, outside the RAG answer path.
 
 ## The Pivot (Week 3) — Offline RAG QA
 
@@ -66,7 +66,7 @@ The original Karatasi direction, built and then replaced:
    - `src/storage/db.py`: `sqlite3.connect()` defaulted to `check_same_thread=True` while `get_store()` is a process-wide singleton — the Streamlit app (and its AppTest runs, each in a fresh thread) reused a connection created in another thread and raised "SQLite objects created in a thread can only be used in that same thread". `connect()` now passes `check_same_thread=False`; `FinanceStore` already serializes all access with `self._lock`, so this is safe.
 3. ✅ **Optional: ask-a-question UI** — DONE. `src/ui/app.py`: Streamlit chat over the corpus using `QueryRouter.answer()`. Bilingual suggested questions, form + suggestion chips, route/value/source display, chat history with a clear button, error handling. Verified headlessly via Streamlit's `AppTest` (SQL + semantic questions render history without exceptions). Run with `venv/bin/streamlit run src/ui/app.py`.
 4. **Final docs/README pass** — already rewritten with this pivot; verify against whatever ships in Week 4.
-5. **Legacy cleanup (optional)** — `chromadb` is unused in `requirements.txt` (streamlit is now used by the UI); `src/ocr/preprocess.py` + `src/ocr/typed.py` are legacy (not in the RAG answer path). Leave unless trimming.
+5. ✅ **Legacy cleanup** — DONE. `chromadb` removed from `requirements.txt` (never used after the pivot — the vector store is sqlite-vec, which was MISSING from requirements.txt and is now pinned as `sqlite-vec>=0.1.6`). `src/ocr/` (preprocess.py, typed.py, __init__.py — the package was already broken, importing the deleted `handwriting` module) moved to `archive/ocr/`; nothing in the live pipeline imports it (ingest calls `pytesseract` directly).
 6. **Demo + submission** — demo video + submission before the Aug 24–25 deadline.
 
 ## Session Environment Notes (critical — replaces deleted CONTINUATION_PROMPT.md)

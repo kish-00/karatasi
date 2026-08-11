@@ -124,11 +124,11 @@ smebrief/
 │   ├── embeddings.py        # multilingual-e5-small helpers (offline)
 │   ├── ingest/              # Corpus → store (extract, chunk, embed)
 │   ├── llm/                 # llama.cpp server (lazy load, idle unload)
-│   ├── ocr/                 # Legacy extraction (preprocess.py, typed.py)
 │   ├── rag/                 # Retriever, context builder, LLM answers
 │   ├── retrieval/           # QueryRouter — SQL intents + semantic fallback
 │   ├── storage/             # SQLite schema + FinanceStore
 │   └── ui/                  # Streamlit ask-a-question chat (app.py)
+├── archive/                 # Legacy Karatasi-era code (OCR pipeline)
 ├── tests/                   # 36 tests: generator, ingest, router, eval, ui
 ├── models/                  # Downloaded models (gitignored)
 ├── samples/                 # Sample documents
