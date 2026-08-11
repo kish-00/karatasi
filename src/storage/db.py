@@ -102,7 +102,7 @@ def connect(db_path: str | Path) -> sqlite3.Connection:
     """Open a SQLite connection with the schema applied and vec loaded."""
     db_path = Path(db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path))
+    conn = sqlite3.connect(str(db_path), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.enable_load_extension(True)
     sqlite_vec.load(conn)

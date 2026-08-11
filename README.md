@@ -46,7 +46,8 @@ SME Brief runs entirely offline on an ordinary 8GB laptop:
 | Pivot to offline RAG QA — generator, ingest, store, router | Week 3 | ✅ Complete |
 | Gold-QA eval harness — 50/50 passing | Week 3 | ✅ Complete |
 | Semantic answers (retriever + context + LLM) wired in | Week 3 | ✅ Complete |
-| Tests rewrite for the RAG stack (32 tests green) | Week 4 | ✅ Complete |
+| Tests rewrite for the RAG stack (36 tests green) | Week 4 | ✅ Complete |
+| Ask-a-question UI (Streamlit chat) | Week 4 | ✅ Complete |
 | Polish, demo, submission | Week 4 (Aug 19 – 25) | ⏳ In progress |
 
 ## Tech Stack
@@ -86,7 +87,10 @@ venv/bin/python -m src.ingest --force
 # 3) Verify against the gold suite (expect PASS 50/50, exit 0)
 venv/bin/python eval/run_eval.py
 
-# 4) Ask a question
+# 4) Launch the ask-a-question UI (bilingual chat with cited sources)
+venv/bin/streamlit run src/ui/app.py
+
+# 5) Or ask from the command line
 venv/bin/python -c "
 from src.storage.store import get_store
 from src.retrieval.router import QueryRouter
@@ -123,7 +127,9 @@ smebrief/
 │   ├── ocr/                 # Legacy extraction (preprocess.py, typed.py)
 │   ├── rag/                 # Retriever, context builder, LLM answers
 │   ├── retrieval/           # QueryRouter — SQL intents + semantic fallback
-│   └── storage/             # SQLite schema + FinanceStore
+│   ├── storage/             # SQLite schema + FinanceStore
+│   └── ui/                  # Streamlit ask-a-question chat (app.py)
+├── tests/                   # 36 tests: generator, ingest, router, eval, ui
 ├── models/                  # Downloaded models (gitignored)
 ├── samples/                 # Sample documents
 ├── requirements.txt
