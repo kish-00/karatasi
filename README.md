@@ -102,9 +102,8 @@ print(ans.route)
 smebrief/
 ├── docs/
 │   ├── ARCHITECTURE.md      # System architecture & data flow
-│   ├── BUILD_PLAN.md         # Build history (incl. pivot) + remaining work
-│   ├── TECH_STACK.md         # Technology decisions & rationale
-│   └── CONTINUATION_PROMPT.md# Session handoff notes
+│   ├── BUILD_PLAN.md         # Build history (incl. pivot) + remaining work + session notes
+│   └── TECH_STACK.md         # Technology decisions & rationale
 ├── scripts/
 │   └── download_models.py   # Qwen GGUF + multilingual-e5-small
 ├── data/
