@@ -1,3 +1,19 @@
+## ADTC 2026 Submission
+
+This repository is the **application source** for our Africa Deep Tech Challenge 2026 ("Laptop LLM Challenge")
+submission, **SME Brief** — an offline, bilingual (French/English), citation-grounded RAG assistant for African
+SMEs' own business documents.
+
+- **Submission repo** (fork of the official template — holds `metadata.json`, `download_model.sh`, `REPORT.md`):
+  `https://github.com/kish-00/adtc-2026-submission` *(fork pending)*
+- **Track / domain:** corporate_enterprise · small-business finance · languages FR + EN
+- **Claims:** African Use Case Bonus (data sovereignty / federated-by-default) + 8 GB budget-laptop
+- **Eval:** 50/50 gold bilingual QA; fully offline; ~1.5–2 GB RAM
+- **Devpost copy:** `docs/demo/SUBMISSION.md` · **What we customized:** `docs/MODEL_CUSTOMIZATION.md` ·
+  **Demo script:** `docs/demo/DEMO_SCRIPT.md`
+
+---
+
 # SME Brief — Offline Local RAG for African SMEs
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://python.org)
