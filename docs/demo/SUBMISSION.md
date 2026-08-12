@@ -84,5 +84,5 @@ Python 3.11 · Streamlit · SQLite · sqlite-vec · sentence-transformers (multi
 
 - **Gallery images** (required): use `docs/demo/ui_landing.png`, `ui_answer_sql_fr.png`, `ui_answer_sql_en.png`, `ui_answer_semantic.png` (screenshots already captured).
 - **Demo video**: follow `docs/demo/DEMO_SCRIPT.md` (90–120s), upload to YouTube/Devpost.
-- **URL**: submission repo `https://github.com/kish-00/adtc-2026-submission` (fork pending).
+- **URL**: submission repo `https://github.com/kish-00/adtc-2026-submission` *(public)*.
 - **Team**: add teammates in Devpost before submitting.
