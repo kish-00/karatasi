@@ -1,8 +1,7 @@
 # SME Brief — Devpost Submission (copy/paste blocks)
 
 Copy each numbered block into the matching Devpost field. Sections 1–13 are final.
-Section 14 (benchmark numbers) is a placeholder — it gets filled from `submission.json`
-once the profiler run (background agent `bg_63c536d2`) completes.
+All sections final. Section 14 numbers are from the completed profiler run (see submission.json in the submission repo).
 
 ---
 
@@ -69,13 +68,27 @@ Python 3.11 · Streamlit · SQLite · sqlite-vec · sentence-transformers (multi
 https://github.com/kish-00/adtc-2026-submission
 
 ## 14. Benchmark numbers (from submission.json — profiler run complete)
-Generation speed: 7.47 tokens/sec   (S_perf = 100 × TPS / 15 = 49.80)
-RAM at peak: 1740.66 MB             (S_eff = 100 × (7000 − peak) / 7000 = 75.13)
-Thermal throttling: Yes (99.0 °C peak) (P_thermal = −10 if throttled)
-Accuracy (arc_easy, 50 samples): 74.0 %
-S_total estimate: ≈ 86.97 / 110    (0.50·74.00 + 0.30·49.80 + 0.20·75.13 − (−10) + 10)
 
-(Note: official score is computed by ADTC organizers from submission.json; this is a self-computed estimate.)
+Measured on: Intel i5-6200U, 7.6 GB RAM, no discrete GPU (CPU-only), Ubuntu 24.04.4 LTS
+
+| Metric | Value |
+|---|---|
+| Generation speed | 7.77 tokens/sec |
+| RAM at peak | 1812.26 MB |
+| Time to first token | 23371.13 ms |
+| Thermal throttling | Yes (93.0 °C peak core temp) |
+| Accuracy (arc_easy, 50 samples) | 74.0% (acc_norm) |
+
+### Score estimate (formula from ADTC rules)
+- S_perf = 100 × (TPS / 15.0) = 100 × (7.77 / 15.0) = 51.80
+- S_eff  = 100 × ((7000 − 1812.26) / 7000) = 74.11
+- S_acc  = 0.74 × 100 = 74.00
+- Thermal penalty = −10 (throttling observed: 93.0 °C peak)
+- African-use-case bonus = +10 (african_alpha_claim: true)
+
+S_total ≈ 0.50·74.00 + 0.30·51.80 + 0.20·74.11 − 10 + 10 = 67.36 / 110
+
+(Note: official score is computed by ADTC organizers from submission.json; this is a self-computed estimate. The thermal penalty and African bonus cancel on the participant's i5-6200U laptop. The audit run on the organizers' better-cooled Standard Laptop is expected to remove the throttle while keeping the +10 bonus — projected audit score ≈ 77.)
 
 ## 15. Team
 Ian Kinuthia (solo) — iankinuthia00@gmail.com — github.com/kish-00
