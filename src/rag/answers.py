@@ -19,12 +19,26 @@ SYSTEM_PROMPT = (
 
 ANSWER_MARKERS = ("assistant:", "réponse:", "answer:")
 
+_FR_WORDS = (
+    "combien", "quelle", "quelles", "quel", "quels", "résumez", "résume",
+    "factures", "facture", "impayées", "impayé", "impayés", "loyer", "bail",
+    "contrat", "reçus", "reçu", "montant", "payé", "payés", "avons", "êtes",
+    "votre", "notre", "une",
+)
+
+
+def _detect_french(question: str) -> bool:
+    q = question.lower()
+    return sum(1 for w in _FR_WORDS if re.search(rf"\b{w}\b", q)) >= 2
+
 
 def build_prompt(question: str, context: str) -> str:
+    lang = "Answer in French." if _detect_french(question) else "Answer in English."
     return (
         f"{SYSTEM_PROMPT}\n\n"
         f"Documents:\n{context}\n\n"
         f"Question: {question}\n"
+        f"{lang}\n"
         f"Answer:"
     )
 
