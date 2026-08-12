@@ -50,26 +50,34 @@ def extract_pdf_text(path: Path) -> list[str]:
 
 
 def extract_image_text(path: Path) -> list[str]:
-    """OCR a scanned photo (Tesseract, venv-bundled binary).
+    """OCR a scanned photo (Tesseract).
 
-    The bundled tesseract lives in venv/bin but loads libtesseract/liblept
-    from venv/lib — set LD_LIBRARY_PATH so the subprocess resolves them.
+    Prefers a venv-bundled tesseract at venv/bin/tesseract (with its libs
+    and tessdata pinned via env vars), but transparently falls back to a
+    system tesseract on PATH so ingest works after a venv rebuild without
+    manual symlinks.
     """
     import os
 
     import pytesseract
     from PIL import Image
 
-    lib_dirs = [str(BASE / "venv" / "lib"), str(BASE / "venv" / "lib" / "x86_64-linux-gnu")]
-    existing = os.environ.get("LD_LIBRARY_PATH", "")
-    os.environ["LD_LIBRARY_PATH"] = ":".join([d for d in [*lib_dirs, existing] if d])
+    if TESSERACT_CMD.exists():
+        # venv-bundled binary: pin libs + tessdata to the venv so the
+        # subprocess resolves libtesseract/liblept and eng.traineddata.
+        lib_dirs = [str(BASE / "venv" / "lib"), str(BASE / "venv" / "lib" / "x86_64-linux-gnu")]
+        existing = os.environ.get("LD_LIBRARY_PATH", "")
+        os.environ["LD_LIBRARY_PATH"] = ":".join(d for d in [*lib_dirs, existing] if d)
+        os.environ["TESSDATA_PREFIX"] = str(BASE / "venv" / "share" / "tessdata")
+        pytesseract.pytesseract.tesseract_cmd = str(TESSERACT_CMD)
+    else:
+        # System tesseract on PATH: clear any stale venv tessdata pin so it
+        # falls back to its compiled-in data directory.
+        stale = os.environ.get("TESSDATA_PREFIX", "")
+        if stale and not Path(stale).exists():
+            os.environ.pop("TESSDATA_PREFIX", None)
+        pytesseract.pytesseract.tesseract_cmd = "tesseract"
 
-    # The venv was renamed (karatasi -> smebrief); the stale TESSDATA_PREFIX
-    # in the environment points at a nonexistent path. Pin it to the venv's
-    # actual tessdata so the bundled tesseract finds eng.traineddata.
-    os.environ["TESSDATA_PREFIX"] = str(BASE / "venv" / "share" / "tessdata")
-
-    pytesseract.pytesseract.tesseract_cmd = str(TESSERACT_CMD)
     with Image.open(path) as img:
         text = pytesseract.image_to_string(img)
     return [text] if text.strip() else []
