@@ -5,7 +5,7 @@ submission, **SME Brief** — an offline, bilingual (French/English), citation-g
 SMEs' own business documents.
 
 - **Submission repo** (fork of the official template — holds `metadata.json`, `download_model.sh`, `REPORT.md`):
-  `https://github.com/kish-00/adtc-2026-submission` *(fork pending)*
+  `https://github.com/kish-00/adtc-2026-submission` *(public)*
 - **Track / domain:** corporate_enterprise · small-business finance · languages FR + EN
 - **Claims:** African Use Case Bonus (data sovereignty / federated-by-default) + 8 GB budget-laptop
 - **Eval:** 50/50 gold bilingual QA; fully offline; ~1.5–2 GB RAM
