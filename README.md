@@ -48,6 +48,7 @@ SME Brief runs entirely offline on an ordinary 8GB laptop:
 | Semantic answers (retriever + context + LLM) wired in | Week 3 | ✅ Complete |
 | Tests rewrite for the RAG stack (36 tests green) | Week 4 | ✅ Complete |
 | Ask-a-question UI (Streamlit chat) | Week 4 | ✅ Complete |
+| Final docs/README pass (verified against shipped code, dead deps trimmed) | Week 4 | ✅ Complete |
 | Polish, demo, submission | Week 4 (Aug 19 – 25) | ⏳ In progress |
 
 ## Tech Stack

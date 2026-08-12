@@ -35,7 +35,7 @@ The knowledge base is **one SQLite file** (`data/smebrief.db`): structured finan
 | Option | Offline | Deamon | ACID | Scale note | Verdict |
 |---|---|---|---|---|---|
 | SQLite + sqlite-vec | ✅ | none | ✅ | fine to 100k+ chunks | **Chosen** |
-| ChromaDB | ✅ | separate store | partial | fine | Original choice; still in requirements.txt but **unused** — heavier, no benefit at this scale |
+| ChromaDB | ✅ | separate store | partial | fine | Original choice; dropped in Week 4 legacy cleanup — heavier, no benefit at this scale |
 | FAISS | ✅ | none | ❌ (in-memory) | excellent | Dropped in the pivot; needs manual persistence plumbing |
 | Postgres/pgvector | ❌ server | yes | ✅ | excellent | Production-grade, but a server is the wrong shape for an offline laptop |
 
