@@ -1,8 +1,7 @@
 # SME Brief — Offline Local RAG for African SMEs
 # Africa Deep Tech Challenge 2026
 
-# Image Processing + OCR
-opencv-python-headless>=4.9.0
+# OCR + image utilities (scanned PNGs at ingest)
 Pillow>=10.3.0
 numpy>=1.26.0
 pytesseract>=0.3.10
@@ -26,8 +25,6 @@ PyMuPDF>=1.24.0
 
 # Utilities
 pydantic>=2.7.0
-langdetect>=1.0.9
-psutil>=5.9.0
 
 # Development
 pytest>=8.0.0
